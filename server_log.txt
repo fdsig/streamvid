@@ -1,0 +1,2 @@
+usage: server.py [-h] [--cgi] [--bind ADDRESS] [port]
+server.py: error: unrecognized arguments: --directory /tmp
