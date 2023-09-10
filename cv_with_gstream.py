@@ -37,14 +37,6 @@ while True:
         break
 
     # Process the frame here (e.g., display it)
-    cv2.imshow('Camera', frame)
+    #Cv2.imshow('Camera', frame)
     out.write(frame)  # Send frame
-
-    # Press 'q' to exit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-out.release()
-cv2.destroyAllWindows()
-
+    print(frame)
