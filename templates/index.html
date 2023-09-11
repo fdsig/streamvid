@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Stream</title>
+    <style>
+        /* Styles to make the body stretch full height and remove any margins/paddings */
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center; /* Horizontally center the content */
+            align-items: center;     /* Vertically center the content */
+            background-color: #f4f4f4; /* Just a background color for better view, you can remove or change */
+        }
+
+        /* Style for the image to make it appear as a small window */
+        img {
+            width: 320px;  /* Width of the "small window" */
+            height: 240px; /* Height of the "small window", adjust as needed or remove to keep aspect ratio */
+            border: 2px solid black; /* Optional border for the window */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Optional shadow for the window */
+        }
+    </style>
 </head>
 <body>
     <img src="/video_feed" alt="Video Feed">
