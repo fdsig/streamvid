@@ -1,11 +1,10 @@
 import cv2
 from flask import Flask, Response, render_template
 import os
-
+import time
 
 app = Flask(__name__)
 
-# Capture video
 def gstreamer_pipeline(
     capture_width=1280,
     capture_height=720,
@@ -33,13 +32,22 @@ def gstreamer_pipeline(
         )
     )
 
-gst_str = gstreamer_pipeline()
+def get_video_capture():
+    gst_str = gstreamer_pipeline()
+    return cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
-# Open capture
-cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
+cap = get_video_capture()
+start_time = time.time()
 
 def generate():
+    global start_time, cap
     while True:
+        elapsed_time = time.time() - start_time
+        if elapsed_time > 3600:  # 3600 seconds = 1 hour
+            cap.release()
+            cap = get_video_capture()
+            start_time = time.time()
+            
         ret, frame = cap.read()
         if not ret:
             print("Error: Couldn't read frame.")
@@ -50,10 +58,9 @@ def generate():
             continue
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        
+
 @app.route('/')
 def index():
-    #pid = os.getpid()  # Get the PID of the current process
     return render_template('index.html')
 
 @app.route('/video_feed')
