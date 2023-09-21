@@ -1,5 +1,7 @@
 import cv2
 from flask import Flask, Response, render_template
+import os
+
 
 app = Flask(__name__)
 
@@ -51,6 +53,7 @@ def generate():
         
 @app.route('/')
 def index():
+    #pid = os.getpid()  # Get the PID of the current process
     return render_template('index.html')
 
 @app.route('/video_feed')
@@ -59,4 +62,4 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=9080)
