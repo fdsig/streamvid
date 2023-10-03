@@ -1,6 +1,6 @@
+from flask import Flask, render_template, Response, jsonify, request
 import cv2
 import time
-from flask import Flask, Response, render_template, jsonify
 
 app = Flask(__name__)
 
@@ -13,6 +13,7 @@ class VideoState:
 
 video_state = VideoState()
 
+# Capture video
 def gstreamer_pipeline(
     capture_width=1280,
     capture_height=720,
@@ -41,6 +42,8 @@ def gstreamer_pipeline(
     )
 
 gst_str = gstreamer_pipeline()
+
+# Open capture
 cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
 def generate():
@@ -73,32 +76,23 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/start')
-def start_stream():
-    video_state.is_streaming = True
-    return jsonify(status="success")
+@app.route('/action', methods=['POST'])
+def action():
+    action_type = request.json['action']
 
-@app.route('/stop')
-def stop_stream():
-    video_state.is_streaming = False
-    return jsonify(status="success")
+    if action_type == "start":
+        video_state.is_streaming = True
+    elif action_type == "stop":
+        video_state.is_streaming = False
+    elif action_type == "pause":
+        video_state.is_paused = True
+    elif action_type == "resume":
+        video_state.is_paused = False
+    elif action_type == "save_image":
+        video_state.save_image = True
 
-@app.route('/pause')
-def pause_stream():
-    video_state.is_paused = True
-    return jsonify(status="success")
-
-@app.route('/resume')
-def resume_stream():
-    video_state.is_paused = False
-    return jsonify(status="success")
-
-@app.route('/save_image')
-def save_current_image():
-    video_state.save_image = True
     return jsonify(status="success")
 
 if __name__ == '__main__':
