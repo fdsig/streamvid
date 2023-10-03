@@ -1,6 +1,6 @@
 import cv2
 import time
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, jsonify
 
 app = Flask(__name__)
 
@@ -41,8 +41,6 @@ def gstreamer_pipeline(
     )
 
 gst_str = gstreamer_pipeline()
-
-# Open capture
 cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
 def generate():
@@ -81,31 +79,27 @@ def video_feed():
 @app.route('/start')
 def start_stream():
     video_state.is_streaming = True
-    return "Stream started"
+    return jsonify(status="success")
 
 @app.route('/stop')
 def stop_stream():
     video_state.is_streaming = False
-    return "Stream stopped"
+    return jsonify(status="success")
 
 @app.route('/pause')
 def pause_stream():
     video_state.is_paused = True
-    return "Stream paused"
+    return jsonify(status="success")
 
 @app.route('/resume')
 def resume_stream():
     video_state.is_paused = False
-    return "Stream resumed"
+    return jsonify(status="success")
 
 @app.route('/save_image')
 def save_current_image():
     video_state.save_image = True
-    return "Image saved"
-
-@app.route('/via')
-def via():
-    return render_template('via.html')
+    return jsonify(status="success")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9080)
