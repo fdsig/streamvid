@@ -11,6 +11,7 @@
             margin: 0;
             font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center; /* Horizontally center the content */
             align-items: center;     /* Vertically center the content */
             background-color: #f4f4f4; /* Just a background color for better view, you can remove or change */
@@ -22,10 +23,39 @@
             height: 240px; /* Height of the "small window", adjust as needed or remove to keep aspect ratio */
             border: 2px solid black; /* Optional border for the window */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Optional shadow for the window */
+            margin-bottom: 10px; /* Margin for better spacing */
         }
+
+        /* Style for the button container */
+        .btn-container {
+            display: flex;
+            gap: 10px; /* Spacing between buttons */
+        }
+
+        /* Style for buttons */
+        button {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ddd;
+        }
+
     </style>
 </head>
 <body>
     <img src="/video_feed" alt="Video Feed">
+    
+    <div class="btn-container">
+        <button onclick="window.location.href='/start'">Start Stream</button>
+        <button onclick="window.location.href='/pause'">Pause Stream</button>
+        <button onclick="window.location.href='/resume'">Resume Stream</button>
+        <button onclick="window.location.href='/stop'">Stop Stream</button>
+        <button onclick="window.location.href='/save_image'">Save Image</button>
+        <button onclick="window.location.href='/via'">Go to Via Page</button>
+    </div>
 </body>
 </html>
