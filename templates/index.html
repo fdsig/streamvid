@@ -5,33 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Stream</title>
     <style>
-        /* ... [Your previous CSS here] ... */
-    </style>
-    <script>
-        function sendRequest(endpoint, message) {
-            fetch(endpoint)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert(message);
-                } else {
-                    alert("An error occurred.");
-                }
-            })
-            .catch(error => {
-                console.error("There was an error!", error);
-            });
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
         }
-    </script>
+
+        img {
+            width: 320px;
+            height: 240px;
+            border: 2px solid black;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ddd;
+        }
+    </style>
 </head>
 <body>
     <img src="/video_feed" alt="Video Feed">
+    
     <div class="btn-container">
-        <button onclick="sendRequest('/start', 'Stream started')">Start Stream</button>
-        <button onclick="sendRequest('/pause', 'Stream paused')">Pause Stream</button>
-        <button onclick="sendRequest('/resume', 'Stream resumed')">Resume Stream</button>
-        <button onclick="sendRequest('/stop', 'Stream stopped')">Stop Stream</button>
-        <button onclick="sendRequest('/save_image', 'Image saved')">Save Image</button>
+        <button onclick="sendAction('start')">Start Stream</button>
+        <button onclick="sendAction('pause')">Pause Stream</button>
+        <button onclick="sendAction('resume')">Resume Stream</button>
+        <button onclick="sendAction('stop')">Stop Stream</button>
+        <button onclick="sendAction('save_image')">Save Image</button>
     </div>
+
+    <script>
+        function sendAction(actionType) {
+            fetch('/action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: actionType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status !== "success") {
+                    alert("Action failed.");
+                }
+            })
+            .catch(error => {
+                console.error("There was an error with the fetch operation:", error);
+            });
+        }
+    </script>
 </body>
 </html>
