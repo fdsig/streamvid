@@ -1,8 +1,7 @@
 import cv2
-from flask import Flask, Response, render_template, request, jsonify
-import os
-from pathlib import Path
 import time
+import multiprocessing as mp
+from flask import Flask, Response, render_template, request, jsonify
 
 app = Flask(__name__)
 
@@ -37,11 +36,10 @@ def get_video_capture():
     gst_str = gstreamer_pipeline()
     return cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
-cap = get_video_capture()
-start_time = time.time()
+def generate(q):
+    cap = get_video_capture()
+    start_time = time.time()
 
-def generate():
-    global start_time, cap
     while True:
         elapsed_time = time.time() - start_time
         if elapsed_time > 3600:  # 3600 seconds = 1 hour
@@ -53,34 +51,46 @@ def generate():
         if not ret:
             print("Error: Couldn't read frame.")
             continue
+
         ret, jpeg = cv2.imencode('.jpg', frame)
         if not ret:
             print("Error: Couldn't encode frame.")
             continue
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
 
-@app.route('/save_image', methods=['POST'])
-def save_image():
-    print("Saving image...")
-    ret, frame = cap.read()
-    if not ret:
-        return jsonify(status='error', message="Couldn't read frame.")
-    filename = f"saved_frame_{time.time()}.jpg"
-    print(f"frame {frame.shape} saved to {filename}")
-    path = Path('.')
-    print(path.absolute())
-    cv2.imwrite(str(path/filename), frame)
-    return jsonify(status='ok', message="Image saved successfully.")    
+        if q.full():
+            q.get()  # remove one item if the queue is full to avoid losing the new item
+
+        q.put(jpeg.tobytes())  # put the jpeg bytes data into the queue
+
+def video_capture(q):
+    try:
+        generate(q)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('mp_index.html')
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    if q.empty():
+        return Response(status=204)
+    jpg_bytes = q.get()
+    return Response(jpg_bytes, mimetype='image/jpeg')
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9080)
+def video_from_process():
+    q = mp.Queue(maxsize=10)  # Adjust the size based on your requirement
+    p = mp.Process(target=video_capture, args=(q,))
+    p.start()
+    return q    # To be able to use q outside of this function
+    
+
+if __name__ == "__main__":
+    global q
+    q = video_from_process()
+    while q.empty():
+        time.sleep(0.1)
+    
+    print(q.get())
+    #app.run(host='0.0.0.0', port=9080, debug=True)
