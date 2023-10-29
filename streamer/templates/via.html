@@ -1526,14 +1526,37 @@ function show_image_grid_view() {
 // Handlers for top navigation bar
 //
 function sel_local_images() {
-  // source: https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications
-  if (invisible_file_input) {
-    invisible_file_input.setAttribute('multiple', 'multiple');
-    invisible_file_input.accept   = '.jpg,.jpeg,.png,.bmp';
-    invisible_file_input.onchange = project_file_add_local;
-    invisible_file_input.click();
+  fetch('/get_image_filenames')
+    .then(response => response.json())
+    .then(filenames => {
+      filenames.forEach(filename => {
+        project_file_add_server(filename);
+      });
+    });
+}
+
+function project_file_add_server(filename) {
+  var new_img_id = project_add_new_file(filename, undefined); // size is undefined or you can define a way to get it
+
+  // Construct the full URL to the image
+  var imgUrl = '/get_image/' + filename.split('/').pop();
+
+  // Now using URLs instead of FileRefs
+  _via_img_fileref[new_img_id] = imgUrl;
+
+  set_file_annotations_to_default_value(new_img_id);
+
+  var new_img_index = _via_image_id_list.indexOf(new_img_id);
+
+  if (_via_img_metadata) {
+    show_message('Loaded image: ' + filename);
+    _via_show_img(new_img_index);
+    update_img_fn_list();
+  } else {
+    show_message("Failed to load image: " + filename);
   }
 }
+
 
 // invoked by menu-item buttons in HTML UI
 function download_all_region_data(type, file_extension) {
@@ -8510,6 +8533,7 @@ function project_file_add_local(event) {
   var discarded_file_count = 0;
   for ( var i = 0; i < user_selected_images.length; ++i ) {
     var filetype = user_selected_images[i].type.substr(0, 5);
+    con
     if ( filetype === 'image' ) {
       // check which filename in project matches the user selected file
       var img_index = _via_image_filename_list.indexOf(user_selected_images[i].name);

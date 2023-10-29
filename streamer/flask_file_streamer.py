@@ -1,5 +1,5 @@
 import cv2
-
+from pathlib import Path
 from flask import Flask, Response, render_template, request, jsonify, send_from_directory
 import threading
 from pathlib import Path
@@ -76,17 +76,46 @@ def via():
     return render_template('via.html')
 
 
+@app.route('/get_image_files_json', methods=['GET'])
+def get_image_file_json():
+    path = Path('saved_images')
+    try:
+        # Assuming images are stored directly under the 'saved_images' directory
+        image_filenames = [str(filename) for filename in path.iterdir()]
+        print(f"Found {len(image_filenames)} images.")
+        # Filter out any non-image files if necessary
+        image_filenames = [filename for filename in image_filenames if filename.endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
+        
+        return jsonify(image_filenames)
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify(error=str(e)), 500
+
+
+@app.route('/ims/<path:path>')
+def send_report(path,methods=['GET']):
+    print(path)
+    path = Path(path)
+    print(path.exists())
+    return send_from_directory('ims', path)
+
+
+
 @app.route('/get_image_filenames', methods=['GET'])
 def get_image_filenames():
-    image_folder = 'saved_images'
-    images = [f for f in os.listdir(image_folder) if os.path.isfile(os.path.join(image_folder, f))]
-    return jsonify(images)
-
-
-@app.route('/saved_images/<filename>', methods=['GET'])
-def serve_image(filename):
-    return send_from_directory('saved_images', filename)
-
+    path = Path('saved_images')
+    try:
+        # Assuming images are stored directly under the 'saved_images' directory
+        image_filenames = [str(filename) for filename in path.iterdir()]
+        print(f"Found {len(image_filenames)} images.")
+        # Filter out any non-image files if necessary
+        image_filenames = [filename for filename in image_filenames if filename.endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
+        
+        return jsonify(image_filenames)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify(error=str(e)), 500
 
 
 if __name__ == '__main__':
