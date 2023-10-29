@@ -93,4 +93,4 @@ if __name__ == "__main__":
         time.sleep(0.1)
     
     print(q.get())
-    #app.run(host='0.0.0.0', port=9080, debug=True)
+    app.run(host='0.0.0.0', port=9080, debug=True)
