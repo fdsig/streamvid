@@ -21,6 +21,11 @@ def start_producer():
     except Exception as e:
         print(f"An error occurred while starting the producer script: {e}")
 
+def wait_for_producer():
+    while not os.path.exists('/tmp/producer_ready.flag'):
+        time.sleep(1)
+    os.remove('/tmp/producer_ready.flag')  # clean up the flag
+
 
 def gstreamer_pipeline(format='I420', 
                        capture_width=1280, 
@@ -132,5 +137,5 @@ def get_image_filenames():
 
 if __name__ == '__main__':
     start_producer()
-    time.sleep(10)
+    wait_for_producer()
     app.run(host='0.0.0.0', port=9080)
