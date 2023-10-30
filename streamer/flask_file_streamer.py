@@ -14,8 +14,10 @@ camera_lock = threading.Lock()
 
 def start_producer():
     try:
-        subprocess.Popen(['bash', 'producer.sh'])
-        print("Producer script started successfully.")
+        with open('output.log', 'w') as f:
+            print("Producer script started successfully.")
+            subprocess.Popen(['bash', 'producer.sh'], stdout=f, stderr=f)   
+    
     except Exception as e:
         print(f"An error occurred while starting the producer script: {e}")
 
@@ -130,4 +132,5 @@ def get_image_filenames():
 
 if __name__ == '__main__':
     start_producer()
+    time.sleep(10)
     app.run(host='0.0.0.0', port=9080)
