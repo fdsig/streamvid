@@ -4,11 +4,21 @@ from flask import Flask, Response, render_template, request, jsonify, send_from_
 import threading
 from pathlib import Path
 import time
+import os
+import subprocess
 
 app = Flask(__name__)
 
 # Defining a threading lock for synchronizing camera access
 camera_lock = threading.Lock()
+
+def start_producer():
+    try:
+        subprocess.Popen(['bash', 'producer.sh'])
+        print("Producer script started successfully.")
+    except Exception as e:
+        print(f"An error occurred while starting the producer script: {e}")
+
 
 def gstreamer_pipeline(format='I420', 
                        capture_width=1280, 
@@ -119,4 +129,5 @@ def get_image_filenames():
 
 
 if __name__ == '__main__':
+    start_producer()
     app.run(host='0.0.0.0', port=9080)
