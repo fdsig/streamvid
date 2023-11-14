@@ -9,3 +9,10 @@ Using No-IP's DDNS service (or any other similar service) is a great way to expo
     Install the No-IP Dynamic Update Client (DUC):
         Download and install the No-IP DUC on the computer where your Flask app is running.
         Log in to the client using your No-IP account. The DUC will ensure that the IP address for your chosen domain (e.g., myflaskapp.ddns.net) always points to the current public IP of your computer.
+
+
+### data labeling
+
+data is labeled using a modified version of  [VIA](https://www.robots.ox.ac.uk/~vgg/software/via/) which is integrated into this project and can take camera stills that are captured on edge device and served from the same edge device and label these either for semantic segmentiatn or bounding box task.
+
+
