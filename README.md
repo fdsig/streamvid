@@ -15,4 +15,10 @@ Using No-IP's DDNS service (or any other similar service) is a great way to expo
 
 data is labeled using a modified version of  [VIA](https://www.robots.ox.ac.uk/~vgg/software/via/) which is integrated into this project and can take camera stills that are captured on edge device and served from the same edge device and label these either for semantic segmentiatn or bounding box task.
 
+to do:
+
+- [] get image stills to show in VIA
+- [] source train object detection model
+
+
 
