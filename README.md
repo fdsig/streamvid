@@ -1,4 +1,4 @@
-### This is a repository of scrips for caputring data from edge devices sensors intendete as methods to capture data for inference of machine learning models and traning data.
+### This is a repository of scripts for capturing data from edge devices sensors intended as methods to capture data for inference of machine learning models and training data.
 
 Using No-IP's DDNS service (or any other similar service) is a great way to expose a Flask app running on your local machine to the internet, especially when you have a dynamic IP address. Here's a step-by-step guide to set it up:
 
@@ -11,14 +11,16 @@ Using No-IP's DDNS service (or any other similar service) is a great way to expo
         Log in to the client using your No-IP account. The DUC will ensure that the IP address for your chosen domain (e.g., myflaskapp.ddns.net) always points to the current public IP of your computer.
 
 
-### data labeling
+### data labelling
 
-data is labeled using a modified version of  [VIA](https://www.robots.ox.ac.uk/~vgg/software/via/) which is integrated into this project and can take camera stills that are captured on edge device and served from the same edge device and label these either for semantic segmentiatn or bounding box task.
+data is labelled using a modified version of  [VIA](https://www.robots.ox.ac.uk/~vgg/software/via/) which is integrated into this project and can take camera stills that are captured on edge device and served from the same edge device and label these either for semantic segmentation or bounding box task.
 
 to do:
 
-- [] get image stills to show in VIA
-- [] source train object detection model
+-[ ] get image stills to show in VIA
+-[ ] source train object detection model
+-[ ] set up tracking
+-[ ] visualize inference live in video stream
 
 
 
