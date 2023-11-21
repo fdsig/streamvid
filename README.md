@@ -17,10 +17,10 @@ data is labelled using a modified version of  [VIA](https://www.robots.ox.ac.uk/
 
 to do:
 
--[ ] get image stills to show in VIA
--[ ] source train object detection model
--[ ] set up tracking
--[ ] visualize inference live in video stream
+- [ ] get image stills to show in VIA
+- [ ] source train object detection model
+- [ ] set up tracking
+- [ ] visualize inference live in video stream
 
 
 
