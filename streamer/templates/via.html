@@ -1539,7 +1539,7 @@ function project_file_add_server(filename) {
   var new_img_id = project_add_new_file(filename, undefined); // size is undefined or you can define a way to get it
 
   // Construct the full URL to the image
-  var imgUrl = '/get_image/' + filename.split('/').pop();
+  var imgUrl = 'http://192.168.1.200:9080/images/' + filename.split('/').pop();
 
   // Now using URLs instead of FileRefs
   _via_img_fileref[new_img_id] = imgUrl;
@@ -10215,6 +10215,12 @@ function _via_show_img(img_index) {
     }
   }
 
+  if (_via_img_metadata[img_id].filename.startsWith("http://192.168.1.200:9080/images/")) {
+    _via_img_src[img_id] = _via_img_metadata[img_id].filename;
+    _via_show_img(img_index);
+    return;
+  }
+  
   if ( _via_buffer_img_index_list.includes(img_index) ) {
     _via_current_image_loaded = false;
     _via_show_img_from_buffer(img_index).then( function(ok_img_index) {
