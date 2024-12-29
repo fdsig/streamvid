@@ -18,7 +18,17 @@
 *.key
 *.secret
 
+
 #private scripts
 commiter.sh
 
+#python files
+*.pyc
+*.pyo
+*.pyd
 
+#pycache
+__pycache__
+
+#logs
+*.log
