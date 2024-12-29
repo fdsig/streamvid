@@ -1,0 +1,18 @@
+<!-- Add a sidebar for image thumbnails -->
+<div id="sidebar" style="position: fixed; right: 0; top: 0; width: 200px; height: 100%; overflow-y: auto; background-color: #f0f0f0; border-left: 1px solid #ccc;">
+    <h3>Image List</h3>
+    <div id="imageList"></div>
+</div>
+
+<canvas id="canvas"></canvas>
+<button id="loadImagesButton">Load Images</button>
+<button id="prevImageButton">Previous</button>
+<button id="nextImageButton">Next</button>
+<button id="captureButton">Capture</button>
+<button id="toggleDrawButton">Toggle Draw</button>
+<button id="saveBoundingBoxButton">Save Bounding Box</button>
+
+<!-- Add a text input for the label -->
+<input type="text" id="imageLabelInput" placeholder="Enter image label" style="margin-top: 10px;">
+
+<script src="{{ url_for('static', filename='js/draw.js') }}"></script>

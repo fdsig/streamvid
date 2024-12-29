@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Feed</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function saveImage() {
+            $.post('/save_image', function(data) {
+                alert(data.message);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div style="text-align: center;">
+        <img src="/video_feed" style="width: 640px; height: 480px;" />
+        <br>
+        <button onclick="saveImage()">Save Image</button>
+    </div>
+</body>
+</html>

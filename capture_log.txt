@@ -1,0 +1,179 @@
+Encoder null, cannot set bitrate!
+Encoder Profile = High
+Supported resolutions in case of ARGUS Camera
+  (2) : 640x480
+  (3) : 1280x720
+  (4) : 1920x1080
+  (5) : 2104x1560
+  (6) : 2592x1944
+  (7) : 2616x1472
+  (8) : 3840x2160
+  (9) : 3896x2192
+  (10): 4208x3120
+  (11): 5632x3168
+  (12): 5632x4224
+
+Runtime ARGUS Camera Commands:
+
+  Help : 'h'
+  Quit : 'q'
+  Set Capture Mode:
+      mo:<val>
+          (1): image
+          (2): video
+  Get Capture Mode:
+      gmo
+  Set sensor orientation:
+      so:<val>
+          (0): none
+          (1): Rotate counter-clockwise 90 degrees
+          (2): Rotate 180 degrees
+          (3): Rotate clockwise 90 degrees
+  Get sensor orientation:
+      gso
+  Set sensor mode:
+      smo:<val> e.g., smo:1
+  Get sensor mode:
+      gsmo
+  Set Whitebalance Mode:
+      wb:<val>
+          (0): off
+          (1): auto
+          (2): incandescent
+          (3): fluorescent
+          (4): warm-fluorescent
+          (5): daylight
+          (6): cloudy-daylight
+          (7): twilight
+          (8): shade
+          (9): manual
+  Get Whitebalance Mode:
+      gwb
+  Set Saturation (0 to 2):
+      st:<val> e.g., st:1.25
+  Get Saturation:
+      gst
+  Set Exposure Compensation (-2 to 2):
+      ec:<val> e.g., ec:-2
+  Get Exposure Compensation:
+      gec
+  Set Auto Whitebalance Lock:
+      awbl:<val> e.g., awbl:0
+  Get Auto Whitebalance Lock:
+      awbl
+  Set Auto Exposure Lock:
+      ael:<val> e.g., ael:0
+  Get Auto Exposure Lock:
+      gael
+  Set TNR Mode:
+      tnrm:<val> e.g., tnrm:1
+          (0): OFF
+          (1): FAST
+          (2): HIGH QUALITY
+  Get TNR Mode:
+      gtnrm
+  Set TNR Strength (-1 to 1):
+      tnrs:<val> e.g., tnrs:0.5
+  Get TNR Strength:
+      gtnrs
+  Set EE Mode:
+      eem:<val> e.g., eem:1
+          (0): OFF
+          (1): FAST
+          (2): HIGH QUALITY
+  Get EE Mode:
+      geem
+  Set EE Strength (-1 to 1):
+      ees:<val> e.g., ees:0.5
+  Get EE Strength:
+      gees
+  Set Auto Exposure Anti-Banding (0 to 3):
+      aeab:<val> e.g., aeab:2
+          (0): OFF
+          (1): MODE AUTO
+          (2): MODE 50HZ
+          (3): MODE 60HZ
+  Get Auto Exposure Anti-Banding:
+      gaeab
+  Set Gain Range:
+      gr:<val><space><val> e.g., gr:1 16
+  Get Gain Range:
+      ggr
+  Set Exposure Time Range:
+      etr:<val><space><val> e.g., etr:34000 35000
+  Get Exposure Time Range:
+      getr
+  Set ISP Digital Gain Range:
+      dgr:<val><space><val> e.g., dgr:2 152
+  Get ISP Digital Gain Range:
+      gdgr
+  Capture: enter 'j' OR
+           followed by a timer (e.g., jx5000, capture after 5 seconds) OR
+           followed by multishot count (e.g., j:6, capture 6 images)
+           timer/multihot values are optional, capture defaults to single shot with timer=0s
+  Start Recording : enter '1'
+  Stop Recording  : enter '0'
+  Video snapshot  : enter '2' (While recording video)
+  Get Preview Resolution:
+      gpcr
+  Get Image Capture Resolution:
+      gicr
+  Get Video Capture Resolution:
+      gvcr
+
+
+Runtime encoder configuration options:
+
+  Set Encoding Bit-rate(in bytes):
+      br:<val> e.g., br:4000000
+  Get Encoding Bit-rate(in bytes):
+      gbr
+  Set Encoding Profile(only for H.264):
+      ep:<val> e.g., ep:1
+          (0): Baseline
+          (1): Main
+          (2): High
+  Get Encoding Profile(only for H.264):
+      gep
+  Force IDR Frame on video Encoder(only for H.264):
+      Enter 'f' 
+
+
+bitrate = 4000000
+Encoder control-rate = 1
+Encoder EnableTwopassCBR = 0
+** Message: 13:46:00.856: <main:4670> iterating capture loop ....
+NvMMLiteOpen : Block : BlockType = 7 
+===== NVMEDIA: NVENC =====
+NvMMLiteBlockCreate : Block : BlockType = 7 
+** Message: 13:46:26.384: <_intr_handler:4261> User Interrupted.. 
+
+Opening in BLOCKING MODE 
+GST_ARGUS: Creating output stream
+CONSUMER: Waiting until producer is connected...
+GST_ARGUS: Available Sensor modes :
+GST_ARGUS: 3264 x 2464 FR = 21.000000 fps Duration = 47619048 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 3264 x 1848 FR = 28.000001 fps Duration = 35714284 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1920 x 1080 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 59.999999 fps Duration = 16666667 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 120.000005 fps Duration = 8333333 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: Running with following settings:
+   Camera index = 0 
+   Camera mode  = 4 
+   Output Stream W = 1280 H = 720 
+   seconds to Run    = 0 
+   Frame Rate = 120.000005 
+GST_ARGUS: Setup Complete, Starting captures for 0 seconds
+GST_ARGUS: Starting repeat capture requests.
+CONSUMER: Producer has connected; continuing.
+Terminating the camera pipeline ...
+** Message: 13:46:26.651: <main:4680> Capture completed
+** Message: 13:46:26.651: <main:4729> Camera application will now exit
+GST_ARGUS: Cleaning up
+CONSUMER: Done Success
+GST_ARGUS: Done Success

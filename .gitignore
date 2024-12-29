@@ -1,0 +1,24 @@
+*.jpg
+*.mp4S
+*.mp4
+*.png
+*.avi
+*.jpeg
+*.gif
+*.bmp
+*.JPG
+*.JPEG
+*.PNG
+
+/saved_images
+
+#private local files and secrets
+.DS_Store
+.env
+*.key
+*.secret
+
+#private scripts
+commiter.sh
+
+
