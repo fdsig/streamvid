@@ -10,10 +10,8 @@ from producer import VideoStream
 import time
 import base64
 from base64 import b64encode
-from camera import Camera
 import numpy as np
 from uuid import uuid4
-import nanocamera as nano
 # Image frame sent to the Flask object
 video_frame = None
 save_frame_flag = False

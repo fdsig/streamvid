@@ -1,27 +1,66 @@
 # Import the needed libraries
 import time
 from threading import Thread
-
 import cv2
+import logging
+logger = logging.getLogger(__name__)
 
+
+
+''' credit to 
+https://github.com/thehapyone/NanoCamera/blob/master/nanocamera/NanoCam.py
+from where this code was adapted
+this solves the threading issue with the camera with one thread = one class instance
+'''
+
+class VideoCaptureCM:
+    def __init__(self, pipeline, backend):
+        self.cap = cv2.VideoCapture(pipeline, backend)
+
+    def __enter__(self):
+        return self.cap
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cap.release()
+
+
+# def captureFrames():
+#     global video_frame, thread_lock, save_frame_flag
+#     gstream_parms = Gstreamer()
+#     gst_str = gstream_parms.gstreamer_pipeline()
+#     # Video capturing from OpenCV
+#     with VideoCaptureCM(gst_str, cv2.CAP_GSTREAMER) as video_capture:
+#         while True and video_capture.isOpened():
+#             return_key, frame = video_capture.read()
+#             if not return_key:
+#                 break
+#         # Create a copy of the frame and store it in the global variable,
+#         # with thread safe access
+#             with thread_lock:
+#                 video_frame = frame.copy()
+#         video_capture.release()
 
 CSI: int = 0
 USB: int = 1
 RTSP: int = 2
 MJPEG: int = 3 
 
-''' credit to 
-https://github.com/thehapyone/NanoCamera/blob/master/nanocamera/NanoCam.py
-from where this code was adaptet'''
 class Camera:
-    def __init__(self, camera_type=CSI, device_id=0, source="localhost:8080", flip=0, width=640, height=480, fps=30,
-                 enforce_fps=False, debug=False):
+   
+    def __init__(self, 
+                 camera_type=CSI, 
+                 device_id=0, 
+                 flip=0, 
+                 width=640, 
+                 height=480, 
+                 fps=30,
+                 enforce_fps=False, 
+                 debug=False):
         # initialize all variables
         self.fps = fps
         self.camera_type = camera_type
         self.camera_id = device_id
         # for streaming camera only
-        self.camera_location = source
         self.flip_method = flip
         self.width = width
         self.height = height
@@ -37,37 +76,31 @@ class Camera:
         3 = Error: Could not read image from camera
         4 = Error: Could not release camera
         '''
-        # Need to keep an history of the error values
+        #Need to keep an history of the error values
         self.__error_value = [0]
-
-        # created a thread for enforcing FPS camera read and write
+        #created a thread for enforcing FPS camera read and write
         self.cam_thread = None
         # holds the frame data
         self.frame = None
-
-        # tracks if a CAM opened was succesful or not
+        #tracks if a CAM opened was succesful or not
         self.__cam_opened = False
-
-        # create the OpenCV camera inteface
+        #create the OpenCV camera inteface
         self.cap = None
-
-        # open the camera interface
+        #open the camera interface
         self.open()
         # enable a threaded read if enforce_fps is active
         if self.enforce_fps:
             self.start()
 
     def __csi_pipeline(self, sensor_id=0):
-        return ('nvarguscamerasrc sensor-id=%d ! '
+        return (f'nvarguscamerasrc sensor-id={sensor_id} ! '
                 'video/x-raw(memory:NVMM), '
-                'width=(int)%d, height=(int)%d, '
-                'format=(string)NV12, framerate=(fraction)%d/1 ! '
-                'nvvidconv flip-method=%d ! '
-                'video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! '
+                f'width=(int){self.width}, height=(int){self.height}, '
+                f'format=(string)NV12, framerate=(fraction){self.fps}/1 ! '
+                f'nvvidconv flip-method={self.flip_method} ! '
+                f'video/x-raw, width=(int){self.width}, height=(int){self.height}, format=(string)BGRx ! '
                 'videoconvert ! '
-                'video/x-raw, format=(string)BGR ! appsink' % (sensor_id,
-                                                               self.width, self.height, self.fps, self.flip_method,
-                                                               self.width, self.height))
+                'video/x-raw, format=(string)BGR ! appsink')
 
     def __usb_pipeline(self, device_name="/dev/video1"):
         return (f'v4l2src device={device_name} ! '
@@ -161,13 +194,13 @@ class Camera:
                 self.__error_value.append(1)
                 raise RuntimeError()
             self.__cam_opened = True
-        except RuntimeError:
+        except RuntimeError as e:
             self.__cam_opened = False
             if self.debug_mode:
                 raise RuntimeError('Error: Could not initialize CSI camera.')
-        except Exception:
+        except Exception as e:
             # some unknown error occurred
-            self.__error_value.append(-1)
+            logger.error("Unknown Error has occurred")
             self.__cam_opened = False
             if self.debug_mode:
                 raise RuntimeError("Unknown Error has occurred")

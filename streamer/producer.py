@@ -1,6 +1,6 @@
 import cv2
 import threading
-from utils import Camera
+from camera import Camera
 class Gstreamer: 
     def __init__(self):
         self.set_params()
@@ -42,8 +42,8 @@ class VideoStream:
     def __init__(self):
         self.camera = Camera(flip=0, width=640, height=480, fps=30)
         self.video_frame = None
-        self.thread_lock = threading.Lock()
         self.running = True
+        self.thread_lock = threading.Lock()
         self.capture_thread = threading.Thread(target=self.capture_frames)
         self.capture_thread.start()
 
