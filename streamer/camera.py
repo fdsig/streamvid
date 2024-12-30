@@ -276,16 +276,18 @@ class Camera:
 
 
 class JetsonCSI:
-    def __init__(self, flip=0, width=640, height=480, fps=30):
+    def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0):
         flip : int
         width : int
         height : int
         fps : int
+        camera_id : int
 
         self.flip = flip
         self.width = width
         self.height = height
         self.fps = fps
+        self.camera_id = camera_id
         self.__pipeline = self.__pipeline__()
         self.cap = cv2.VideoCapture(self.__pipeline, cv2.CAP_GSTREAMER)
     
@@ -294,11 +296,19 @@ class JetsonCSI:
         # for us with context managers
         return self.cap
     def __exit__(self, exc_type, exc_value, traceback):
+        print(f"Exiting context manager {exc_type} {exc_value} {traceback}")
+        try:
+            #ensure the camera thread stops running
+            self.cam_thread.join()
+            if self.cap is not None:
+                self.cap.release()
+            #update the cam opened variable
+        except RuntimeError as e:
+            # update the error value parameter
+            logger.error(f"Error: Could not release camera in context manager as {exc_type}
+                         {e}")
         self.cap.release()
-    
-    def __del__(self):
-        self.cap.release()
-    
+
     def __dict__(self):
         return {
             'flip': self.flip,
@@ -312,7 +322,7 @@ class JetsonCSI:
                 'video/x-raw(memory:NVMM), '
                 f'width=(int){self.width}, height=(int){self.height}, '
                 f'format=(string)NV12, framerate=(fraction){self.fps}/1 ! '
-                f'nvvidconv flip-method={self.flip_method} ! '
+                f'nvvidconv flip-method={self.flip} ! '
                 f'video/x-raw, width=(int){self.width}, height=(int){self.height}, format=(string)BGRx ! '
                 'videoconvert ! '
                 'video/x-raw, format=(string)BGR ! appsink')
@@ -323,3 +333,33 @@ class JetsonCSI:
     def camera_close(self):
         ''' releases the camera object'''
         self.cap.release()
+    
+    def __read(self):
+        # reading images
+        ret, image = self.cap.read()
+        if ret:
+            return image
+        else:
+            # update the error value parameter
+            self.__error_value.append(3)
+
+    def read(self):
+        # read the camera stream
+        try:
+            # check if debugging is activated
+            if self.debug_mode:
+                # check the error value
+                if self.__error_value[-1] != 0:
+                    raise RuntimeError("An error as occurred. Error Value:", self.__error_value)
+            if self.enforce_fps:
+                # if threaded read is enabled, it is possible the thread hasn't run yet
+                if self.frame is not None:
+                    return self.frame
+                else:
+                    # we need to wait for the thread to be ready.
+                    return self.__read()
+            else:
+                return self.__read()
+        except Exception as ee:
+            if self.debug_mode:
+                raise RuntimeError(ee.args)

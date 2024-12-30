@@ -1,16 +1,17 @@
 import cv2
 import threading
-from camera import Camera
+from camera import Camera, JetsonCSI
+import logging
+from logger_config import setup_logging
 
+setup_logging()
 class VideoStream:
-    def __init__(self, camera_type=0, 
-                 device_id=0, 
+    def __init__(self,
                  flip=0, 
                  width=640, 
                  height=480, 
-                 fps=30):
-        camera_type: int
-        device_id: int
+                 fps=30,
+                 camera_id=0):
         flip: int
         width: int
         height: int
@@ -20,13 +21,12 @@ class VideoStream:
         self.width = width
         self.height = height
         self.fps = fps
-        self.camera_type = camera_type
-        self.device_id = device_id
 
-        self.camera = Camera(flip=self.flip, 
+        self.camera = JetsonCSI(flip=self.flip, 
                              width=self.width, 
                              height=self.height, 
-                             fps=self.fps)
+                             fps=self.fps,
+                             camera_id=0)
         self.video_frame = None
         self.running = True
         self.thread_lock = threading.Lock()
@@ -39,8 +39,10 @@ class VideoStream:
         while self.running:
             frame = self.camera.read()
             with self.thread_lock:
-                print(f"Capture thread ID: {threading.get_ident()}")
-                self.video_frame = frame.copy()
+                try:
+                    self.video_frame = frame.copy()
+                except Exception as e:
+                    logging.error(f"Error capturing frame: {e}")
 
     def __get_frame__(self):
         with self.thread_lock:
