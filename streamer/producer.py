@@ -1,4 +1,5 @@
 import cv2
+import threading
 
 class Gstreamer: 
     def __init__(self):
@@ -37,17 +38,30 @@ class Gstreamer:
         )
     )
 
-def generate(cap):
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Couldn't read frame.")
-            continue
-        ret, jpeg = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Couldn't encode frame.")
-            continue
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        
+class VideoStream:
+    def __init__(self, camera):
+        self.camera = camera
+        self.video_frame = None
+        self.thread_lock = threading.Lock()
+        self.running = True
+        self.capture_thread = threading.Thread(target=self.capture_frames)
+        self.capture_thread.start()
 
+    def capture_frames(self):
+        while self.running:
+            frame = self.camera.read()
+            with self.thread_lock:
+                self.video_frame = frame.copy()
+
+    def get_frame(self):
+        with self.thread_lock:
+            if self.video_frame is None:
+                return None
+            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+            if not return_key:
+                return None
+            return bytearray(encoded_image)
+
+    def stop(self):
+        self.running = False
+        self.capture_thread.join()

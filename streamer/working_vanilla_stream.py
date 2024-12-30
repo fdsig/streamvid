@@ -7,12 +7,13 @@ import json
 from utils import (cleanup, generate_metadata, update_metadata, VideoCaptureCM)
 import atexit
 from pathlib import Path
+from producer import VideoStream
 import time
 import base64
 from base64 import b64encode
 import numpy as np
-from hashlib import sha256
 from uuid import uuid4
+import nanocamera as nano
 
 # Image frame sent to the Flask object
 global video_frame
@@ -48,7 +49,7 @@ def captureFrames():
             with thread_lock:
                 video_frame = frame.copy()
         video_capture.release()
-        
+
 def encodeFrame():
     global thread_lock
     while True:
@@ -64,6 +65,23 @@ def encodeFrame():
         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
             bytearray(encoded_image) + b'\r\n')
 
+def captureFrames():
+    global camera
+    while True:
+        frame = camera.read()
+        return_key, encoded_image = cv2.imencode(".jpg", frame)
+        if not return_key:
+            continue
+        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
+            bytearray(encoded_image) + b'\r\n')
+        
+def streamFrames():
+    while True:
+        encoded_image = video_stream.get_frame()
+        if encoded_image is None:
+            continue
+        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
+
 @app.route("/")
 def index():
     print(url_for('static', filename='js/utils.js'))
@@ -75,8 +93,8 @@ def index():
 
 # this should be a
 @app.route("/video_feed")
-def streamFrames():
-    return Response(encodeFrame(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+def video_feed():
+    return Response(streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/draw')
 def draw():
@@ -207,12 +225,17 @@ if __name__ == '__main__':
     generate_metadata(Path('./metadata/metadata.json'))
     atexit.register(cleanup)
     # Create a thread and attach the method that captures the image frames, to it
-    process_thread = threading.Thread(target=captureFrames)
-    process_thread.daemon = True
-    # Start the thread
-    process_thread.start()
+    # process_thread = threading.Thread(target=captureFrames)
+    # process_thread.daemon = True
+    # # Start the thread
+    # process_thread.start()
+    camera = nano.Camera(flip=0, width=640, height=480, fps=30)
+    video_stream = VideoStream(camera)
 
 
+    # For multiple CSI camera
+    # camera_2 = nano.Camera(device_id=1, flip=0, width=1280, height=800, fps=30)
+    print('CSI Camera is now ready')
     # start the Flask Web Application
     # While it can be run on any feasible IP, IP = 0.0.0.0 renders the web app on
     # the host machine's localhost and is discoverable by other machines on the same network 
