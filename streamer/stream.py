@@ -1,10 +1,9 @@
 import cv2
-import threading
 from flask import (Response, Flask, render_template, 
-                   jsonify, send_from_directory, request,
-                   make_response, session, url_for)
+                   jsonify, request,
+                   make_response, url_for)
 import json
-from utils import (cleanup, generate_metadata, update_metadata, VideoCaptureCM)
+from utils import (cleanup, generate_metadata, update_metadata)
 import atexit
 from pathlib import Path
 from producer import VideoStream
@@ -15,73 +14,15 @@ from camera import Camera
 import numpy as np
 from uuid import uuid4
 import nanocamera as nano
-
 # Image frame sent to the Flask object
-global video_frame
 video_frame = None
 save_frame_flag = False
-from producer import Gstreamer
-
 # Use locks for thread-safe viewing of frames in multiple browsers
-global thread_lock 
-global video_capture
-thread_lock = threading.Lock()
-
 
 # Create the Flask object for the application
 
 app = Flask(__name__, template_folder='templates')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-
-
-# def captureFrames():
-#     global video_frame, thread_lock, save_frame_flag
-#     gstream_parms = Gstreamer()
-#     gst_str = gstream_parms.gstreamer_pipeline()
-#     # Video capturing from OpenCV
-#     with VideoCaptureCM(gst_str, cv2.CAP_GSTREAMER) as video_capture:
-
-#         while True and video_capture.isOpened():
-#             return_key, frame = video_capture.read()
-#             if not return_key:
-#                 break
-#         # Create a copy of the frame and store it in the global variable,
-#         # with thread safe access
-#             with thread_lock:
-#                 video_frame = frame.copy()
-#         video_capture.release()
-
-# def encodeFrame():
-#     global thread_lock
-#     while True:
-#         # Acquire thread_lock to access the global video_frame object
-#         with thread_lock:
-#             global video_frame
-#             if video_frame is None:
-#                 continue
-#             return_key, encoded_image = cv2.imencode(".jpg", video_frame)
-#             if not return_key:
-#                 continue
-#         # Output image as a byte array
-#         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-#             bytearray(encoded_image) + b'\r\n')
-
-# def captureFrames():
-#     global camera
-#     while True:
-#         frame = camera.read()
-#         return_key, encoded_image = cv2.imencode(".jpg", frame)
-#         if not return_key:
-#             continue
-#         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-#             bytearray(encoded_image) + b'\r\n')
-        
-def streamFrames():
-    while True:
-        encoded_image = video_stream.get_frame()
-        if encoded_image is None:
-            continue
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
 
 @app.route("/")
 def index():
@@ -95,7 +36,7 @@ def index():
 # this should be a
 @app.route("/video_feed")
 def video_feed():
-    return Response(streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+    return Response(video_stream.streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/draw')
 def draw():
@@ -230,8 +171,7 @@ if __name__ == '__main__':
     # process_thread.daemon = True
     # # Start the thread
     # process_thread.start()
-    camera = Camera(flip=0, width=640, height=480, fps=30)
-    video_stream = VideoStream(camera)
+    video_stream = VideoStream(flip=0, width=640, height=480, fps=30)
     # For multiple CSI camera
     # camera_2 = nano.Camera(device_id=1, flip=0, width=1280, height=800, fps=30)
     print('CSI Camera is now ready')

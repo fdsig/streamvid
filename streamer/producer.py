@@ -1,6 +1,6 @@
 import cv2
 import threading
-
+from utils import Camera
 class Gstreamer: 
     def __init__(self):
         self.set_params()
@@ -39,8 +39,8 @@ class Gstreamer:
     )
 
 class VideoStream:
-    def __init__(self, camera):
-        self.camera = camera
+    def __init__(self):
+        self.camera = Camera(flip=0, width=640, height=480, fps=30)
         self.video_frame = None
         self.thread_lock = threading.Lock()
         self.running = True
@@ -61,6 +61,13 @@ class VideoStream:
             if not return_key:
                 return None
             return bytearray(encoded_image)
+   
+    def streamFrames(self):
+        while True:
+            encoded_image = self.get_frame()
+            if encoded_image is None:
+                continue
+            yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
 
     def stop(self):
         self.running = False

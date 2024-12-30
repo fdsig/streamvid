@@ -1,6 +1,6 @@
 import cv2
 from flask import Flask, Response, render_template
-import os
+from producer import Gstreamer,generate
 
 
 app = Flask(__name__)
@@ -33,24 +33,12 @@ def gstreamer_pipeline(
         )
     )
 
-gst_str = gstreamer_pipeline()
+
 
 # Open capture
+gst_str = Gstreamer().gstreamer_pipeline()
 cap = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
-def generate():
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Couldn't read frame.")
-            continue
-        ret, jpeg = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Couldn't encode frame.")
-            continue
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        
 @app.route('/')
 def index():
     #pid = os.getpid()  # Get the PID of the current process
@@ -59,7 +47,8 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     print("video_feed() called")
-    return Response(generate(),
+   
+    return Response(generate(cap),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
