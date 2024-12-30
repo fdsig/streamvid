@@ -48,7 +48,7 @@ MJPEG: int = 3
 class Camera:
    
     def __init__(self, 
-                 camera_type=CSI, 
+                 camera_type=0, 
                  device_id=0, 
                  flip=0, 
                  width=640, 
@@ -164,9 +164,11 @@ class Camera:
         return self
 
     def start(self):
+        print(f"Starting camera thread"*10)
         self.cam_thread = Thread(target=self.__thread_read)
         self.cam_thread.daemon = True
         self.cam_thread.start()
+        print(f"Camera thread ID: {self.cam_thread.ident}")
         return self
 
     # Tracks if camera is ready or not(maybe something went wrong)
