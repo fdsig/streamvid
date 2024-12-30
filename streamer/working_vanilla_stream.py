@@ -11,6 +11,7 @@ from producer import VideoStream
 import time
 import base64
 from base64 import b64encode
+from camera import Camera
 import numpy as np
 from uuid import uuid4
 import nanocamera as nano
@@ -33,47 +34,47 @@ app = Flask(__name__, template_folder='templates')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
-def captureFrames():
-    global video_frame, thread_lock, save_frame_flag
-    gstream_parms = Gstreamer()
-    gst_str = gstream_parms.gstreamer_pipeline()
-    # Video capturing from OpenCV
-    with VideoCaptureCM(gst_str, cv2.CAP_GSTREAMER) as video_capture:
+# def captureFrames():
+#     global video_frame, thread_lock, save_frame_flag
+#     gstream_parms = Gstreamer()
+#     gst_str = gstream_parms.gstreamer_pipeline()
+#     # Video capturing from OpenCV
+#     with VideoCaptureCM(gst_str, cv2.CAP_GSTREAMER) as video_capture:
 
-        while True and video_capture.isOpened():
-            return_key, frame = video_capture.read()
-            if not return_key:
-                break
-        # Create a copy of the frame and store it in the global variable,
-        # with thread safe access
-            with thread_lock:
-                video_frame = frame.copy()
-        video_capture.release()
+#         while True and video_capture.isOpened():
+#             return_key, frame = video_capture.read()
+#             if not return_key:
+#                 break
+#         # Create a copy of the frame and store it in the global variable,
+#         # with thread safe access
+#             with thread_lock:
+#                 video_frame = frame.copy()
+#         video_capture.release()
 
-def encodeFrame():
-    global thread_lock
-    while True:
-        # Acquire thread_lock to access the global video_frame object
-        with thread_lock:
-            global video_frame
-            if video_frame is None:
-                continue
-            return_key, encoded_image = cv2.imencode(".jpg", video_frame)
-            if not return_key:
-                continue
-        # Output image as a byte array
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-            bytearray(encoded_image) + b'\r\n')
+# def encodeFrame():
+#     global thread_lock
+#     while True:
+#         # Acquire thread_lock to access the global video_frame object
+#         with thread_lock:
+#             global video_frame
+#             if video_frame is None:
+#                 continue
+#             return_key, encoded_image = cv2.imencode(".jpg", video_frame)
+#             if not return_key:
+#                 continue
+#         # Output image as a byte array
+#         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
+#             bytearray(encoded_image) + b'\r\n')
 
-def captureFrames():
-    global camera
-    while True:
-        frame = camera.read()
-        return_key, encoded_image = cv2.imencode(".jpg", frame)
-        if not return_key:
-            continue
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-            bytearray(encoded_image) + b'\r\n')
+# def captureFrames():
+#     global camera
+#     while True:
+#         frame = camera.read()
+#         return_key, encoded_image = cv2.imencode(".jpg", frame)
+#         if not return_key:
+#             continue
+#         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
+#             bytearray(encoded_image) + b'\r\n')
         
 def streamFrames():
     while True:
@@ -229,10 +230,8 @@ if __name__ == '__main__':
     # process_thread.daemon = True
     # # Start the thread
     # process_thread.start()
-    camera = nano.Camera(flip=0, width=640, height=480, fps=30)
+    camera = Camera(flip=0, width=640, height=480, fps=30)
     video_stream = VideoStream(camera)
-
-
     # For multiple CSI camera
     # camera_2 = nano.Camera(device_id=1, flip=0, width=1280, height=800, fps=30)
     print('CSI Camera is now ready')

@@ -65,3 +65,5 @@ class VideoStream:
     def stop(self):
         self.running = False
         self.capture_thread.join()
+
+
