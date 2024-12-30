@@ -289,25 +289,28 @@ class JetsonCSI:
         self.fps = fps
         self.camera_id = camera_id
         self.__pipeline = self.__pipeline__()
-        self.cap = cv2.VideoCapture(self.__pipeline, cv2.CAP_GSTREAMER)
-    
+        self.cam_thread = Thread(target=self.__enter__)
+        self.cam_thread.daemon = True
+        self.cam_thread.start()
+        print(f"Camera thread ID: {self.cam_thread.ident}")
+        return self
     
     def __enter__(self):
         # for us with context managers
+        self.cam_thread = Thread(target=self.__enter__)
+        self.cam_thread.daemon = True
+        self.cam_thread.start()
+        print(f"Camera thread ID: {self.cam_thread.ident}")
         return self.cap
+    
     def __exit__(self, exc_type, exc_value, traceback):
-        print(f"Exiting context manager {exc_type} {exc_value} {traceback}")
-        try:
-            #ensure the camera thread stops running
-            self.cam_thread.join()
-            if self.cap is not None:
-                self.cap.release()
-            #update the cam opened variable
-        except RuntimeError as e:
-            # update the error value parameter
-            logger.error(f"Error: Could not release camera in context manager as {exc_type}
-                         {e}")
+        if exc_type is not None:
+            logger.error(f"Exception occurred: {exc_value} {traceback}")
+            #this event only happens when camera streaming is shut down
+            return True
         self.cap.release()
+        self.cam_thread.join()
+        return False
 
     def __dict__(self):
         return {
