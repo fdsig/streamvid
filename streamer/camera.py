@@ -207,76 +207,6 @@ class Camera:
             if self.debug_mode:
                 raise RuntimeError("Unknown Error has occurred")
 
-    def __open_usb(self):
-        # opens an interface to the USB camera
-        try:
-            # initialize the USB camera
-            self.camera_name = "/dev/video" + str(self.camera_id)
-            # check if enforcement is enabled
-            if self.enforce_fps:
-                self.cap = cv2.VideoCapture(self.__usb_pipeline_enforce_fps(self.camera_name), cv2.CAP_GSTREAMER)
-            else:
-                self.cap = cv2.VideoCapture(self.__usb_pipeline(self.camera_name), cv2.CAP_GSTREAMER)
-                if not self.cap.isOpened():
-                    # raise an error here
-                    # update the error value parameter
-                    self.__error_value.append(1)
-                    raise RuntimeError()
-            self.__cam_opened = True
-        except RuntimeError:
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError('Error: Could not initialize USB camera.')
-        except Exception:
-            # some unknown error occurred
-            self.__error_value.append(-1)
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError("Unknown Error has occurred")
-
-    def __open_rtsp(self):
-        # opens an interface to the RTSP location
-        try:
-            # starts the rtsp client
-            self.cap = cv2.VideoCapture(self.__rtsp_pipeline(self.camera_location), cv2.CAP_GSTREAMER)
-            if not self.cap.isOpened():
-                # raise an error here
-                # update the error value parameter
-                self.__error_value.append(1)
-                raise RuntimeError()
-            self.__cam_opened = True
-        except RuntimeError:
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError('Error: Could not initialize RTSP camera.')
-        except Exception:
-            # some unknown error occurred
-            self.__error_value.append(-1)
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError("Unknown Error has occurred")
-
-    def __open_mjpeg(self):
-        # opens an interface to the MJPEG location
-        try:
-            # starts the MJEP client
-            self.cap = cv2.VideoCapture(self.__mjpeg_pipeline(self.camera_location), cv2.CAP_GSTREAMER)
-            if not self.cap.isOpened():
-                # raise an error here
-                # update the error value parameter
-                self.__error_value.append(1)
-                raise RuntimeError()
-            self.__cam_opened = True
-        except RuntimeError:
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError('Error: Could not initialize MJPEG camera.')
-        except Exception:
-            # some unknown error occurred
-            self.__error_value.append(-1)
-            self.__cam_opened = False
-            if self.debug_mode:
-                raise RuntimeError("Unknown Error has occurred")
 
     def __thread_read(self):
         # uses thread to read
@@ -343,3 +273,53 @@ class Camera:
             self.__error_value.append(4)
             if self.debug_mode:
                 raise RuntimeError('Error: Could not release camera')
+
+
+class JetsonCSI:
+    def __init__(self, flip=0, width=640, height=480, fps=30):
+        flip : int
+        width : int
+        height : int
+        fps : int
+
+        self.flip = flip
+        self.width = width
+        self.height = height
+        self.fps = fps
+        self.__pipeline = self.__pipeline__()
+        self.cap = cv2.VideoCapture(self.__pipeline, cv2.CAP_GSTREAMER)
+    
+    
+    def __enter__(self):
+        # for us with context managers
+        return self.cap
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cap.release()
+    
+    def __del__(self):
+        self.cap.release()
+    
+    def __dict__(self):
+        return {
+            'flip': self.flip,
+            'width': self.width,
+            'height': self.height,
+            'fps': self.fps
+        }
+    
+    def __pipeline__(self):
+        return (f'nvarguscamerasrc sensor-id={self.camera_id} ! '
+                'video/x-raw(memory:NVMM), '
+                f'width=(int){self.width}, height=(int){self.height}, '
+                f'format=(string)NV12, framerate=(fraction){self.fps}/1 ! '
+                f'nvvidconv flip-method={self.flip_method} ! '
+                f'video/x-raw, width=(int){self.width}, height=(int){self.height}, format=(string)BGRx ! '
+                'videoconvert ! '
+                'video/x-raw, format=(string)BGR ! appsink')
+    
+    def camera_open(self):
+        ''' returns the camera object'''
+        return self.cap
+    def camera_close(self):
+        ''' releases the camera object'''
+        self.cap.release()

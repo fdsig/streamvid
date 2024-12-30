@@ -1,42 +1,6 @@
 import cv2
 import threading
 from camera import Camera
-class Gstreamer: 
-    def __init__(self):
-        self.set_params()
-
-    def set_params(self,capture_width=1280,
-                   capture_height=720,
-                   display_width=1280,
-                   display_height=720,
-                   framerate=10,
-                   flip_method=0):
-        self.capture_width=capture_width
-        self.capture_height=capture_height
-        self.display_width=display_width
-        self.display_height=display_height
-        self.framerate=framerate
-        self.flip_method=flip_method
-
-    def gstreamer_pipeline(self):  
-     return (
-        "nvarguscamerasrc ! "
-        "video/x-raw(memory:NVMM), "
-        "width=(int)%d, height=(int)%d, "
-        "format=(string)NV12, framerate=(fraction)%d/1 ! "
-        "nvvidconv flip-method=%d ! "
-        "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-        "videoconvert ! "
-        "video/x-raw, format=(string)BGR ! appsink"
-        % (
-            self.capture_width,
-            self.capture_height,
-            self.framerate,
-            self.flip_method,
-            self.display_width,
-            self.display_height,
-        )
-    )
 
 class VideoStream:
     def __init__(self, camera_type=0, 
@@ -67,6 +31,7 @@ class VideoStream:
         self.running = True
         self.thread_lock = threading.Lock()
         self.capture_thread = threading.Thread(target=self.capture_frames)
+        #start the video capture thread
         self.capture_thread.start()
         print(f"Capture thread ID: {self.capture_thread.ident}")
 
@@ -74,6 +39,7 @@ class VideoStream:
         while self.running:
             frame = self.camera.read()
             with self.thread_lock:
+                print(f"Capture thread ID: {threading.get_ident()}")
                 self.video_frame = frame.copy()
 
     def __get_frame__(self):
