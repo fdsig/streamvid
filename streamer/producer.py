@@ -3,59 +3,60 @@ import threading
 from camera import Camera, JetsonCSI
 import logging
 from logger_config import setup_logging
-from args import args
 
 setup_logging()
 class VideoStream:
     def __init__(self,
-                 camera=JetsonCSI(flip=args.flip, 
-                 width=args.width, 
-                 height=args.height, 
-                 fps=args.fps,
-                 camera_id=args.camera_id)):
-        camera: JetsonCSI
-        self.camera = camera
-        self.video_frame = None
-        self.video_frame_id = None
-        self.running = True
-        self.thread_lock = threading.Lock()
-        self.capture_thread = threading.Thread(target=self.__capture_frames__)
-        #start the video capture thread
-        self.capture_thread.start()
-        print(f"Capture thread ID: {self.capture_thread.ident}")
+                 flip=0, 
+                 width=640, 
+                 height=480, 
+                 fps=30,
+                 camera_id=0):
+        flip: int
+        width: int
+        height: int
+        fps: int
+    
+        self.flip = flip
+        self.width = width
+        self.height = height
+        self.fps = fps
+        self.camera_id = camera_id
 
-    def __capture_frames__(self):
-        while self.running:
-            frame = self.camera.capture()
-            print(f"Frame: {frame}")
-            with self.thread_lock:
-                try:
-                    self.video_frame = frame
-                except Exception as e:
-                    logging.error(f"Error capturing frame: {e}")
+        self.camera = JetsonCSI(flip=self.flip, 
+                             width=self.width, 
+                             height=self.height, 
+                             fps=self.fps,
+                             camera_id=self.camera_id)
+        self.video_frame = None
+        self.running = True
+        # self.thread_lock = threading.Lock()
+        # self.capture_thread = threading.Thread(target=self.capture_frames)
+        # #start the video capture thread
+        # self.capture_thread.start()
+        # print(f"Capture thread ID: {self.capture_thread.ident}")
+
+    def capture_frames(self):
+        print(f"going into capture_frames")
+        
 
     def __get_frame__(self):
-        print(f"Getting frame: {self.video_frame}")
-        print('going into __get_frame__')
-        with self.thread_lock:
-            if self.video_frame is None:
-                return None
-            if args.image_format == "jpg":
-                print(self.video_frame)
-                return_key, encoded_image = cv2.imencode(f".{args.image_format}", self.video_frame, [cv2.IMWRITE_JPEG_QUALITY, args.image_quality])
-                print(f"Encoded image: {encoded_image}")
-            elif args.image_format == "png":
-                return_key, encoded_image = cv2.imencode(f".{args.image_format}", self.video_frame)
-            if not return_key:
-                return None
-            return bytearray(encoded_image)
+        print(f"going into __get_frame__")
+        
    
     def streamFrames(self):
-        while True:
-            encoded_image = self.__get_frame__()
-            print(f"Encoded image: {encoded_image}")
+        while self.running:
+            self.video_frame = self.camera.capture()
+            print(f"frame captured of shape: {self.video_frame.shape}")
+            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+            print(f"return_key: {return_key}")
+            print(f"encoded_image: {encoded_image}")
+            encoded_image = bytearray(encoded_image)
+            if not return_key:
+                return None
             if encoded_image is None:
                 continue
+            print('yielding encoded image')
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
 
     def stop(self):
