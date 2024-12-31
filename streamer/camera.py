@@ -74,7 +74,7 @@ class Camera:
         0 = No error
         1 = Error: Could not initialize camera.
         2 = Thread Error: Could not read image from camera
-        3 = Error: Could not read image from camera
+        3 = Error: Could not read image from camera in __read__
         4 = Error: Could not release camera
         '''
         #Need to keep an history of the error values
@@ -220,7 +220,7 @@ class Camera:
                 self.__error_value.append(2)
                 self.__cam_opened = False
                 if self.debug_mode:
-                    raise RuntimeError('Thread Error: Could not read image from camera')
+                    raise RuntimeError('Thread Error: Could not read image from camera in __thread_read__')
                 break
         # reset the thread object:
         self.cam_thread = None
@@ -321,7 +321,7 @@ class JetsonCSI:
                 logger.info("Camera opened successfully")
         else:
             #raise an error
-            logger.error("Error: Could not read image from camera")
+            logger.error("Error: Could not read image from camera in __camera_open__")
             self.cap = None
 
     def __dict__(self):
@@ -329,7 +329,9 @@ class JetsonCSI:
             'flip': self.flip,
             'width': self.width,
             'height': self.height,
-            'fps': self.fps
+            'fps': self.fps,
+            'camera_id': self.camera_id,
+            'flip': self.flip
         }
     
     def __pipeline__(self):
@@ -344,6 +346,7 @@ class JetsonCSI:
     
     def capture(self):
         ''' returns the camera object'''
+        print('capture')
         return self.__read()
     
     def close(self):
@@ -351,6 +354,7 @@ class JetsonCSI:
         self.cap.release()
     
     def __read(self):
+        print('going into __read__')
         if self.cap is None:
             logger.info("Camera is not opened")
             time.sleep(1)
@@ -359,15 +363,14 @@ class JetsonCSI:
                 ret, image = self.cap.read()
                 if ret:
                     frame = image.copy()
+                    print(f"Frame: {frame}")
                     #unique hash based on frame data (eg md5)
                     # short hash
                     # fast hash
-                    # unique hash
-                    frame_hash = md5(frame.tobytes()).hexdigest()
-                    return frame_hash, frame
+                    return frame 
                 else:
                 # update the error value parameter
-                    logger.error("Error: Could not read image from camera")
+                    logger.error("Error: Could not read image from camera in __read__")
             
     def read(self):
         #read the camera stream

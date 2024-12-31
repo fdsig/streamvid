@@ -3,28 +3,31 @@ import threading
 from camera import Camera, JetsonCSI
 import logging
 from logger_config import setup_logging
+from args import args
 
 setup_logging()
 class VideoStream:
     def __init__(self,
-                 camera=JetsonCSI(flip=0, 
-                 width=640, 
-                 height=480, 
-                 fps=30,
-                 camera_id=0)):
+                 camera=JetsonCSI(flip=args.flip, 
+                 width=args.width, 
+                 height=args.height, 
+                 fps=args.fps,
+                 camera_id=args.camera_id)):
         camera: JetsonCSI
         self.camera = camera
         self.video_frame = None
+        self.video_frame_id = None
         self.running = True
         self.thread_lock = threading.Lock()
-        self.capture_thread = threading.Thread(target=self.capture_frames)
+        self.capture_thread = threading.Thread(target=self.__capture_frames__)
         #start the video capture thread
         self.capture_thread.start()
         print(f"Capture thread ID: {self.capture_thread.ident}")
 
-    def capture_frames(self):
+    def __capture_frames__(self):
         while self.running:
             frame = self.camera.capture()
+            print(f"Frame: {frame}")
             with self.thread_lock:
                 try:
                     self.video_frame = frame
@@ -32,10 +35,17 @@ class VideoStream:
                     logging.error(f"Error capturing frame: {e}")
 
     def __get_frame__(self):
+        print(f"Getting frame: {self.video_frame}")
+        print('going into __get_frame__')
         with self.thread_lock:
             if self.video_frame is None:
                 return None
-            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+            if args.image_format == "jpg":
+                print(self.video_frame)
+                return_key, encoded_image = cv2.imencode(f".{args.image_format}", self.video_frame, [cv2.IMWRITE_JPEG_QUALITY, args.image_quality])
+                print(f"Encoded image: {encoded_image}")
+            elif args.image_format == "png":
+                return_key, encoded_image = cv2.imencode(f".{args.image_format}", self.video_frame)
             if not return_key:
                 return None
             return bytearray(encoded_image)
