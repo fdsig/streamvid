@@ -297,8 +297,12 @@ class JetsonCSI:
         print(f"Camera thread ID: {self.cam_thread.ident}")
     
     def __enter__(self):
-        print(f"Camera thread ID: {self.cam_thread.ident}")
-        return self.__read()
+        with self.thread_lock:
+            if self.cap is None or not self.cap.isOpened():
+                self.__camera_open()
+            print(f"Camera thread ID: {self.cam_thread.ident}")
+        return self
+
     
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
@@ -310,9 +314,10 @@ class JetsonCSI:
         return False
     
     def __camera_open(self):
-        self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
-        if self.cap.isOpened():
-            logger.info("Camera opened successfully")
+        if self.cap is None or not self.cap.isOpened():
+            self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
+            if self.cap.isOpened():
+                logger.info("Camera opened successfully")
         else:
             #raise an error
             logger.error("Error: Could not read image from camera")
@@ -352,7 +357,7 @@ class JetsonCSI:
             with self.thread_lock:
                 ret, image = self.cap.read()
                 if ret:
-                    yield image.copy()
+                    return image.copy()
                 else:
                 # update the error value parameter
                     logger.error("Error: Could not read image from camera")
