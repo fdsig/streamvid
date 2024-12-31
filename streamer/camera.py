@@ -289,19 +289,16 @@ class JetsonCSI:
         self.fps = fps
         self.camera_id = camera_id
         self.__pipeline = self.__pipeline__()
-        self.cam_thread = Thread(target=self.__enter__)
+        self.backend = cv2.CAP_GSTREAMER
+        self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
+        self.cam_thread = Thread(target=self.__read)
         self.cam_thread.daemon = True
         self.cam_thread.start()
         print(f"Camera thread ID: {self.cam_thread.ident}")
-        return self
     
     def __enter__(self):
-        # for us with context managers
-        self.cam_thread = Thread(target=self.__enter__)
-        self.cam_thread.daemon = True
-        self.cam_thread.start()
         print(f"Camera thread ID: {self.cam_thread.ident}")
-        return self.cap
+        return self.__read()
     
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
@@ -332,37 +329,23 @@ class JetsonCSI:
     
     def camera_open(self):
         ''' returns the camera object'''
-        return self.cap
+        return self.__read()
     def camera_close(self):
         ''' releases the camera object'''
         self.cap.release()
     
     def __read(self):
         # reading images
-        ret, image = self.cap.read()
-        if ret:
-            return image
-        else:
-            # update the error value parameter
-            self.__error_value.append(3)
+        with self.thread_lock:
+            ret, image = self.cap.read()
+            print(f"Frame in __read: {image}")
+            if ret:
+                return image
+            else:
+                # update the error value parameter
+                logger.error("Error: Could not read image from camera")
 
     def read(self):
-        # read the camera stream
-        try:
-            # check if debugging is activated
-            if self.debug_mode:
-                # check the error value
-                if self.__error_value[-1] != 0:
-                    raise RuntimeError("An error as occurred. Error Value:", self.__error_value)
-            if self.enforce_fps:
-                # if threaded read is enabled, it is possible the thread hasn't run yet
-                if self.frame is not None:
-                    return self.frame
-                else:
-                    # we need to wait for the thread to be ready.
-                    return self.__read()
-            else:
-                return self.__read()
-        except Exception as ee:
-            if self.debug_mode:
-                raise RuntimeError(ee.args)
+        #read the camera stream
+        return self.__read()
+

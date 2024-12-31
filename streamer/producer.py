@@ -1,6 +1,6 @@
 import cv2
 import threading
-from camera import Camera, JetsonCSI
+from camera import JetsonCSI
 import logging
 from logger_config import setup_logging
 
@@ -21,37 +21,40 @@ class VideoStream:
         self.width = width
         self.height = height
         self.fps = fps
+        self.camera_id = camera_id
 
         self.camera = JetsonCSI(flip=self.flip, 
                              width=self.width, 
                              height=self.height, 
                              fps=self.fps,
-                             camera_id=0)
+                             camera_id=self.camera_id)
         self.video_frame = None
         self.running = True
-        self.thread_lock = threading.Lock()
-        self.capture_thread = threading.Thread(target=self.capture_frames)
-        #start the video capture thread
-        self.capture_thread.start()
-        print(f"Capture thread ID: {self.capture_thread.ident}")
+        # self.thread_lock = threading.Lock()
+        # self.capture_thread = threading.Thread(target=self.capture_frames)
+        # #start the video capture thread
+        # self.capture_thread.start()
+        # print(f"Capture thread ID: {self.capture_thread.ident}")
 
     def capture_frames(self):
         while self.running:
-            frame = self.camera.read()
-            with self.thread_lock:
-                try:
-                    self.video_frame = frame.copy()
-                except Exception as e:
-                    logging.error(f"Error capturing frame: {e}")
+            frame = self.camera.camera_open()
+            print(f"Frame in capture_frames: {frame}")
+            #with self.thread_lock:
+            try:
+                self.video_frame = frame.copy()
+            except Exception as e:
+                logging.error(f"Error capturing frame: {e}")
 
     def __get_frame__(self):
-        with self.thread_lock:
-            if self.video_frame is None:
-                return None
-            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
-            if not return_key:
-                return None
-            return bytearray(encoded_image)
+        # with self.thread_lock:
+        print(f"Video frame: {self.video_frame}")
+        if self.video_frame is None:
+            return None
+        return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+        if not return_key:
+            return None
+        return bytearray(encoded_image)
    
     def streamFrames(self):
         while True:
