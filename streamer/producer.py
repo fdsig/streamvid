@@ -36,29 +36,18 @@ class VideoStream:
         # self.capture_thread.start()
         # print(f"Capture thread ID: {self.capture_thread.ident}")
 
-    def capture_frames(self):
-        while self.running:
-            frame = self.camera.camera_open()
-            print(f"Frame in capture_frames: {frame}")
-            #with self.thread_lock:
-            try:
-                self.video_frame = frame.copy()
-            except Exception as e:
-                logging.error(f"Error capturing frame: {e}")
-
     def __get_frame__(self):
         # with self.thread_lock:
-        print(f"Video frame: {self.video_frame}")
-        if self.video_frame is None:
-            return None
-        return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
-        if not return_key:
-            return None
-        return bytearray(encoded_image)
+        with self.camera.capture() as frame:
+            return_key, encoded_image = cv2.imencode(".jpg", frame)
+            if not return_key:
+                return None
+            return bytearray(encoded_image)
    
     def streamFrames(self):
         while True:
             encoded_image = self.__get_frame__()
+            print(f"Encoded image: {encoded_image}")
             if encoded_image is None:
                 continue
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')

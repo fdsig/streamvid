@@ -1,6 +1,6 @@
 # Import the needed libraries
 import time
-from threading import Thread
+from threading import Thread, Lock
 import cv2
 import logging
 logger = logging.getLogger(__name__)
@@ -164,7 +164,6 @@ class Camera:
         return self
 
     def start(self):
-        print(f"Starting camera thread"*10)
         self.cam_thread = Thread(target=self.__thread_read)
         self.cam_thread.daemon = True
         self.cam_thread.start()
@@ -290,8 +289,9 @@ class JetsonCSI:
         self.camera_id = camera_id
         self.__pipeline = self.__pipeline__()
         self.backend = cv2.CAP_GSTREAMER
-        self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
-        self.cam_thread = Thread(target=self.__read)
+        self.cap = None
+        self.thread_lock = Lock()
+        self.cam_thread = Thread(target=self.__camera_open)
         self.cam_thread.daemon = True
         self.cam_thread.start()
         print(f"Camera thread ID: {self.cam_thread.ident}")
@@ -308,6 +308,15 @@ class JetsonCSI:
         self.cap.release()
         self.cam_thread.join()
         return False
+    
+    def __camera_open(self):
+        self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
+        if self.cap.isOpened():
+            logger.info("Camera opened successfully")
+        else:
+            #raise an error
+            logger.error("Error: Could not read image from camera")
+            self.cap = None
 
     def __dict__(self):
         return {
@@ -327,24 +336,27 @@ class JetsonCSI:
                 'videoconvert ! '
                 'video/x-raw, format=(string)BGR ! appsink')
     
-    def camera_open(self):
+    def capture(self):
         ''' returns the camera object'''
         return self.__read()
-    def camera_close(self):
+    
+    def close(self):
         ''' releases the camera object'''
         self.cap.release()
     
     def __read(self):
-        # reading images
-        with self.thread_lock:
-            ret, image = self.cap.read()
-            print(f"Frame in __read: {image}")
-            if ret:
-                return image
-            else:
+        if self.cap is None:
+            logger.info("Camera is not opened")
+            time.sleep(1)
+        else:
+            with self.thread_lock:
+                ret, image = self.cap.read()
+                if ret:
+                    yield image.copy()
+                else:
                 # update the error value parameter
-                logger.error("Error: Could not read image from camera")
-
+                    logger.error("Error: Could not read image from camera")
+            
     def read(self):
         #read the camera stream
         return self.__read()
