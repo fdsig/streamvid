@@ -1,0 +1,14 @@
+README.md
+setup.py
+streamer/__init__.py
+streamer/args.py
+streamer/camera.py
+streamer/logger_config.py
+streamer/producer.py
+streamer/stream.py
+streamer/utils.py
+streamvid.egg-info/PKG-INFO
+streamvid.egg-info/SOURCES.txt
+streamvid.egg-info/dependency_links.txt
+streamvid.egg-info/entry_points.txt
+streamvid.egg-info/top_level.txt

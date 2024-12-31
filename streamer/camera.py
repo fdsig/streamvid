@@ -3,6 +3,7 @@ import time
 from threading import Thread, Lock
 import cv2
 import logging
+from hashlib import md5
 logger = logging.getLogger(__name__)
 
 
@@ -357,7 +358,13 @@ class JetsonCSI:
             with self.thread_lock:
                 ret, image = self.cap.read()
                 if ret:
-                    return image.copy()
+                    frame = image.copy()
+                    #unique hash based on frame data (eg md5)
+                    # short hash
+                    # fast hash
+                    # unique hash
+                    frame_hash = md5(frame.tobytes()).hexdigest()
+                    return frame_hash, frame
                 else:
                 # update the error value parameter
                     logger.error("Error: Could not read image from camera")

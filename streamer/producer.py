@@ -7,29 +7,13 @@ from logger_config import setup_logging
 setup_logging()
 class VideoStream:
     def __init__(self,
-                 flip=0, 
+                 camera=JetsonCSI(flip=0, 
                  width=640, 
                  height=480, 
                  fps=30,
-                 camera_id=0,
-                 camera=JetsonCSI):
-        flip: int
-        width: int
-        height: int
-        fps: int
-        camera_id: int
+                 camera_id=0)):
         camera: JetsonCSI
-    
-        self.flip = flip
-        self.width = width
-        self.height = height
-        self.fps = fps
-
-        self.camera = camera(flip=self.flip, 
-                             width=self.width, 
-                             height=self.height, 
-                             fps=self.fps,
-                             camera_id=0)
+        self.camera = camera
         self.video_frame = None
         self.running = True
         self.thread_lock = threading.Lock()
@@ -59,6 +43,7 @@ class VideoStream:
     def streamFrames(self):
         while True:
             encoded_image = self.__get_frame__()
+            print(f"Encoded image: {encoded_image}")
             if encoded_image is None:
                 continue
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
