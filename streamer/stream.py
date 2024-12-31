@@ -6,7 +6,7 @@ import json
 from utils import (cleanup, generate_metadata, update_metadata)
 import atexit
 from pathlib import Path
-from producer import VideoStream
+from camera import JetsonCSI
 import time
 import base64
 from base64 import b64encode
@@ -35,7 +35,7 @@ def index():
 @app.route("/video_feed")
 def video_feed():
     print('going into video_feed')
-    return Response(video_stream.streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+    return Response(camera.streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/draw')
 def draw():
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     # process_thread.daemon = True
     # # Start the thread
     # process_thread.start()
-    video_stream = VideoStream(flip=0, width=640, height=480, fps=30)
+    camera = JetsonCSI(flip=0, width=640, height=480, fps=30)
     # For multiple CSI camera
     # camera_2 = nano.Camera(device_id=1, flip=0, width=1280, height=800, fps=30)
     print('CSI Camera is now ready')

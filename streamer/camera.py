@@ -291,9 +291,10 @@ class JetsonCSI:
         self.backend = cv2.CAP_GSTREAMER
         self.cap = None
         self.thread_lock = Lock()
-        self.cam_thread = Thread(target=self.__camera_open)
-        self.cam_thread.daemon = True
-        self.cam_thread.start()
+        # self.cam_thread = Thread(target=self.__camera_open)
+        # self.cam_thread.daemon = True
+        # self.cam_thread.start()
+        self.running = True
         print(f"Camera thread ID: {self.cam_thread.ident}")
     
     def __enter__(self):
@@ -314,8 +315,10 @@ class JetsonCSI:
         return False
     
     def __camera_open(self):
+        '''function to open the camera and assign it to self.cap
+        which is threadsafe (controlled by self.thread_lock)'''
+        #funciont to open the camera and assign it to self.cap
         if self.cap is None or not self.cap.isOpened():
-            print(f"going into __camera_open")
             self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
             if self.cap.isOpened():
                 logger.info("Camera opened successfully")
@@ -351,13 +354,14 @@ class JetsonCSI:
         ''' releases the camera object'''
         self.cap.release()
     
-    def __read(self):
-        print(f"going into __read")
-        if self.cap is None:
-            logger.info("Camera is not opened")
-            time.sleep(1)
-        else:
-            with self.thread_lock:
+    def __read(self):   
+        #threadlock controlling __camera_open
+        with self.thread_lock:
+            if self.cap is None:
+                logger.info("Camera is not opened")
+                time.sleep(1)
+            else:
+                #read the camera stream
                 ret, image = self.cap.read()
                 if ret:
                     return image.copy()
@@ -368,4 +372,17 @@ class JetsonCSI:
     def read(self):
         #read the camera stream
         return self.__read()
+    
+    def streamFrames(self):
+        while self.running:
+            self.video_frame = self.__read()
+            print(f"frame captured of shape: {self.video_frame.shape}")
+            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+            if not return_key:
+                return None
+            if encoded_image is None:
+                continue
+            encoded_image = bytearray(encoded_image)
+            yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
+
 
