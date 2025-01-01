@@ -35,7 +35,7 @@ def index():
 @app.route("/video_feed")
 def video_feed():
     print('going into video_feed')
-    return Response(camera.streamFrames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+    return Response(camera.getFrame(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/draw')
 def draw():

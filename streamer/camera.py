@@ -1,6 +1,7 @@
 # Import the needed libraries
 import time
-from threading import Thread, Lock
+from threading import Thread, Lock, current_thread
+from queue import Queue
 import cv2
 import logging
 logger = logging.getLogger(__name__)
@@ -291,10 +292,11 @@ class JetsonCSI:
         self.backend = cv2.CAP_GSTREAMER
         self.cap = None
         self.thread_lock = Lock()
-        # self.cam_thread = Thread(target=self.__camera_open)
-        # self.cam_thread.daemon = True
-        # self.cam_thread.start()
+        self.cam_thread = Thread(target=self.__camera_open)
+        self.cam_thread.daemon = True
+        self.cam_thread.start()
         self.running = True
+        self.frame_queue = Queue(maxsize=10) 
         print(f"Camera thread ID: {self.cam_thread.ident}")
     
     def __enter__(self):
@@ -315,17 +317,16 @@ class JetsonCSI:
         return False
     
     def __camera_open(self):
-        '''function to open the camera and assign it to self.cap
-        which is threadsafe (controlled by self.thread_lock)'''
         #funciont to open the camera and assign it to self.cap
-        if self.cap is None or not self.cap.isOpened():
-            self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
-            if self.cap.isOpened():
-                logger.info("Camera opened successfully")
-        else:
-            #raise an error
-            logger.error("Error: Could not read image from camera")
-            self.cap = None
+        with self.thread_lock:
+            if self.cap is None or not self.cap.isOpened():
+                self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
+                if self.cap.isOpened():
+                    logger.info("Camera opened successfully")
+            else:
+                #raise an error
+                logger.error("Error: Could not read image from camera")
+                self.cap = None
 
     def __dict__(self):
         return {
@@ -373,7 +374,8 @@ class JetsonCSI:
         #read the camera stream
         return self.__read()
     
-    def streamFrames(self):
+    def queueFrames(self):
+        print(f"going into queueFrames")
         while self.running:
             self.video_frame = self.__read()
             print(f"frame captured of shape: {self.video_frame.shape}")
@@ -383,6 +385,28 @@ class JetsonCSI:
             if encoded_image is None:
                 continue
             encoded_image = bytearray(encoded_image)
+            self.frame_queue.put(encoded_image) 
+    
+    def getFrame(self):
+        print(f"going into getFrame")
+        self.queueFrames()
+        print(f"frame queue size: {self.frame_queue.qsize()}")
+        try:
+            return self.frame_queue.get()
+        except Queue.Empty:
+            logger.error(f"Error getting frame: {Queue.Empty}")
+            return None
+    
+    def streamFrames(self):
+        while self.running:
+            self.video_frame = self.__read()
+            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+            if not return_key:
+                return None
+            if encoded_image is None:
+                continue
+            encoded_image = bytearray(encoded_image)
             yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
+
 
 
