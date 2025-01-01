@@ -392,7 +392,7 @@ class JetsonCSI:
         self.queueFrames()
         print(f"frame queue size: {self.frame_queue.qsize()}")
         try:
-            return self.frame_queue.get()
+            print(f"frame captured of shape: {self.frame_queue.get().shape}")
         except Queue.Empty:
             logger.error(f"Error getting frame: {Queue.Empty}")
             return None
