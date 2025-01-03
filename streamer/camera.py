@@ -385,14 +385,19 @@ class JetsonCSI:
             if encoded_image is None:
                 continue
             encoded_image = bytearray(encoded_image)
+            print('putting frame into queue')
             self.frame_queue.put(encoded_image) 
     
-    def getFrame(self):
+    def getFrame(self) -> bytes:
+
+        ''' yeild a sigle fram from queue'''
+
         print(f"going into getFrame")
         self.queueFrames()
         print(f"frame queue size: {self.frame_queue.qsize()}")
         try:
             print(f"frame captured of shape: {self.frame_queue.get().shape}")
+            yield self.frame_queue.get()
         except Queue.Empty:
             logger.error(f"Error getting frame: {Queue.Empty}")
             return None

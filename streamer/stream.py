@@ -7,7 +7,6 @@ from utils import (cleanup, generate_metadata, update_metadata)
 import atexit
 from pathlib import Path
 from camera import JetsonCSI
-import time
 import base64
 from base64 import b64encode
 import numpy as np
