@@ -277,12 +277,7 @@ class Camera:
 
 class JetsonCSI:
     def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0):
-        flip : int
-        width : int
-        height : int
-        fps : int
-        camera_id : int
-
+        # Initialize camera parameters
         self.flip = flip
         self.width = width
         self.height = height
@@ -292,50 +287,15 @@ class JetsonCSI:
         self.backend = cv2.CAP_GSTREAMER
         self.cap = None
         self.thread_lock = Lock()
-        self.cam_thread = Thread(target=self.__camera_open)
+        self.running = True
+        self.frame_queue = Queue(maxsize=10)  # Adjust the size as needed
+
+        # Start the camera thread
+        self.cam_thread = Thread(target=self.queueFrames)
         self.cam_thread.daemon = True
         self.cam_thread.start()
-        self.running = True
-        self.frame_queue = Queue(maxsize=10) 
         print(f"Camera thread ID: {self.cam_thread.ident}")
-    
-    def __enter__(self):
-        with self.thread_lock:
-            if self.cap is None or not self.cap.isOpened():
-                self.__camera_open()
-            print(f"Camera thread ID: {self.cam_thread.ident}")
-        return self
 
-    
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is not None:
-            logger.error(f"Exception occurred: {exc_value} {traceback}")
-            #this event only happens when camera streaming is shut down
-            return True
-        self.cap.release()
-        self.cam_thread.join()
-        return False
-    
-    def __camera_open(self):
-        #funciont to open the camera and assign it to self.cap
-        with self.thread_lock:
-            if self.cap is None or not self.cap.isOpened():
-                self.cap = cv2.VideoCapture(self.__pipeline, self.backend)
-                if self.cap.isOpened():
-                    logger.info("Camera opened successfully")
-            else:
-                #raise an error
-                logger.error("Error: Could not read image from camera")
-                self.cap = None
-
-    def __dict__(self):
-        return {
-            'flip': self.flip,
-            'width': self.width,
-            'height': self.height,
-            'fps': self.fps
-        }
-    
     def __pipeline__(self):
         return (f'nvarguscamerasrc sensor-id={self.camera_id} ! '
                 'video/x-raw(memory:NVMM), '
@@ -345,31 +305,24 @@ class JetsonCSI:
                 f'video/x-raw, width=(int){self.width}, height=(int){self.height}, format=(string)BGRx ! '
                 'videoconvert ! '
                 'video/x-raw, format=(string)BGR ! appsink')
-    
-    def capture(self):
-        ''' returns the camera object'''
-        print(f"going into capture")
-        return self.__read()
-    
-    def close(self):
-        ''' releases the camera object'''
-        self.cap.release()
-    
-    def __read(self):   
-        #threadlock controlling __camera_open
+
+    def __read(self):
+        # Read a frame from the camera
         with self.thread_lock:
             if self.cap is None:
-                logger.info("Camera is not opened")
+                logger.error("Camera is not opened")
                 time.sleep(1)
+                return None
+            if not self.cap.isOpened():
+                logger.error("Camera is not opened successfully")
+                return None
+            ret, image = self.cap.read()
+            if ret:
+                return image.copy()
             else:
-                #read the camera stream
-                ret, image = self.cap.read()
-                if ret:
-                    return image.copy()
-                else:
-                # update the error value parameter
-                    logger.error("Error: Could not read image from camera")
-            
+                logger.error("Error: Could not read image from camera")
+                return None
+
     def read(self):
         #read the camera stream
         return self.__read()
@@ -377,41 +330,43 @@ class JetsonCSI:
     def queueFrames(self):
         print(f"going into queueFrames")
         while self.running:
-            self.video_frame = self.__read()
-            print(f"frame captured of shape: {self.video_frame.shape}")
-            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
-            if not return_key:
-                return None
-            if encoded_image is None:
-                continue
-            encoded_image = bytearray(encoded_image)
-            print('putting frame into queue')
-            self.frame_queue.put(encoded_image) 
-    
+            try:
+                self.video_frame = self.__read()
+                if self.video_frame is None:
+                    logger.error("No frame captured")
+                    continue
+                print(f"frame captured of shape: {self.video_frame.shape}")
+                return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
+                if not return_key:
+                    logger.error("Failed to encode image")
+                    continue
+                if encoded_image is None:
+                    logger.error("Encoded image is None")
+                    continue
+                encoded_image = bytearray(encoded_image)
+                print('putting frame into queue')
+                if not self.frame_queue.full():
+                    self.frame_queue.put(encoded_image)
+                else:
+                    logger.warning("Frame queue is full, skipping frame")
+            except Exception as e:
+                logger.error(f"Exception in queueFrames: {e}")
+
     def getFrame(self) -> bytes:
-
-        ''' yeild a sigle fram from queue'''
-
+        ''' Yield a single frame from the queue '''
         print(f"going into getFrame")
-        self.queueFrames()
-        print(f"frame queue size: {self.frame_queue.qsize()}")
         try:
-            print(f"frame captured of shape: {self.frame_queue.get().shape}")
-            yield self.frame_queue.get()
-        except Queue.Empty:
-            logger.error(f"Error getting frame: {Queue.Empty}")
+            while self.running:
+                if not self.frame_queue.empty():
+                    frame = self.frame_queue.get()
+                    print(f"frame captured of size: {len(frame)}")
+                    yield frame
+                else:
+                    logger.warning("Frame queue is empty, waiting for frames")
+                    time.sleep(0.1)  # Wait a bit before checking again
+        except Exception as e:
+            logger.error(f"Exception in getFrame: {e}")
             return None
-    
-    def streamFrames(self):
-        while self.running:
-            self.video_frame = self.__read()
-            return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
-            if not return_key:
-                return None
-            if encoded_image is None:
-                continue
-            encoded_image = bytearray(encoded_image)
-            yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + encoded_image + b'\r\n')
 
 
 
