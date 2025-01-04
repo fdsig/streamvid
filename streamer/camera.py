@@ -1,7 +1,7 @@
 # Import the needed libraries
 import time
 from threading import Thread, Lock, current_thread
-from queue import Queue
+from utils import cleanup
 import cv2
 import logging
 logger = logging.getLogger(__name__)
@@ -22,7 +22,13 @@ class VideoCaptureCM:
         return self.cap
 
     def __exit__(self, exc_type, exc_value, traceback):
+        print(f"releasing camera")
+        print(f"exc_type: {exc_type}")
+        print(f"exc_value: {exc_value}")
+        print(f"traceback: {traceback}")
         self.cap.release()
+        cleanup()
+
 
 
 # def captureFrames():
@@ -43,7 +49,8 @@ class VideoCaptureCM:
 
 
 class JetsonCSI:
-    def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0):
+    def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0,
+                 capture_handler=VideoCaptureCM):
         # Initialize camera parameters
         self.flip = flip
         self.width = width
@@ -51,7 +58,7 @@ class JetsonCSI:
         self.fps = fps
         self.camera_id = camera_id
         self.backend = cv2.CAP_GSTREAMER
-        self.cap = None
+        self.capture_handler = capture_handler
         self.lock = Lock()
         self.running = True
         # Start the camera thread
@@ -75,37 +82,39 @@ class JetsonCSI:
     
     def __read(self):
         # Read a frame from the camera
-        self.__camera_open()
-        while self.running:
-            if not self.cap.isOpened():
-                logger.error("Camera is not opened successfully")
-                time.sleep(1)
-                continue
-            return_key, image = self.cap.read()
-            if return_key:
-                with self.lock:
-                    self.video_frame = image.copy()
-            else:
-                logger.error("Error: Could not read image from camera")
-                return None
+        with self.capture_handler(self.__pipeline__(), self.backend) as cap:
+            while self.running:
+                if not cap.isOpened():
+                    logger.error("Camera is not opened successfully")
+                    time.sleep(1)
+                    continue
+                return_key, image = cap.read()
+                if return_key:
+                    with self.lock:
+                        self.video_frame = image
+                else:
+                    logger.error("Error: Could not read image from camera")
+                    return None
         
-    def __camera_open(self):
-        self.cap = cv2.VideoCapture(self.__pipeline__(), self.backend)
-
     def read(self):
         #read the camera stream
         with self.lock:
-            return self.video_frame
+            if self.video_frame is not None:
+                return self.video_frame
+            else:
+                return None
+    
+    def stop(self):
+        self.running = False
+        self.cam_thread.join()
     
     def queueFrames(self):
-        print(f"going into queueFrames")
         while self.running:
             try:
                 self.video_frame = self.__read()
                 if self.video_frame is None:
                     logger.error("No frame captured")
                     continue
-                print(f"frame captured of shape: {self.video_frame.shape}")
                 return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
                 if not return_key:
                     logger.error("Failed to encode image")
@@ -114,7 +123,6 @@ class JetsonCSI:
                     logger.error("Encoded image is None")
                     continue
                 encoded_image = bytearray(encoded_image)
-                print('putting frame into queue')
                 if not self.frame_queue.full():
                     self.frame_queue.put(encoded_image)
                 else:

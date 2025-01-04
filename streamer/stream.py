@@ -7,6 +7,7 @@ from utils import (cleanup, generate_metadata, update_metadata)
 import atexit
 from pathlib import Path
 from camera import JetsonCSI
+from producer import YieldFrames
 import base64
 from base64 import b64encode
 import numpy as np
@@ -34,7 +35,7 @@ def index():
 @app.route("/video_feed")
 def video_feed():
     print('going into video_feed')
-    return Response(camera.getFrame(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+    return Response(YieldFrames(camera), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/draw')
 def draw():
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     # process_thread.daemon = True
     # # Start the thread
     # process_thread.start()
-    camera = JetsonCSI(flip=0, width=640, height=480, fps=30)
+    camera = JetsonCSI(flip=0, width=640, height=480, fps=16)
     # For multiple CSI camera
     # camera_2 = nano.Camera(device_id=1, flip=0, width=1280, height=800, fps=30)
     print('CSI Camera is now ready')
