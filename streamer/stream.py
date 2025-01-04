@@ -12,6 +12,7 @@ import base64
 from base64 import b64encode
 import numpy as np
 from uuid import uuid4
+from logger import logger
 # Image frame sent to the Flask object
 video_frame = None
 save_frame_flag = False
@@ -39,7 +40,15 @@ def video_feed():
 
 @app.route('/draw')
 def draw():
-    session_id = request.cookies.get('session_id')
+    try:
+        session_id = request.cookies.get('session_id')
+    except TypeError:
+        logging.error(f"session_id not found in cookies")
+        session_id = str(uuid4())
+    except Exception as e:
+        logging.error(f"Error getting session_id: {e}")
+        session_id = str(uuid4())
+
     print('draw session_id from draw', session_id)
     response = make_response(render_template('draw.html'))
     response.set_cookie('session_id', session_id, samesite='Lax')

@@ -1,18 +1,33 @@
 <!-- Add a sidebar for image thumbnails -->
-<div id="sidebar" style="position: fixed; right: 0; top: 0; width: 200px; height: 100%; overflow-y: auto; background-color: #f0f0f0; border-left: 1px solid #ccc;">
-    <h3>Image List</h3>
-    <div id="imageList"></div>
-</div>
-
-<canvas id="canvas"></canvas>
-<button id="loadImagesButton">Load Images</button>
-<button id="prevImageButton">Previous</button>
-<button id="nextImageButton">Next</button>
-<button id="captureButton">Capture</button>
-<button id="toggleDrawButton">Toggle Draw</button>
-<button id="saveBoundingBoxButton">Save Bounding Box</button>
-
-<!-- Add a text input for the label -->
-<input type="text" id="imageLabelInput" placeholder="Enter image label" style="margin-top: 10px;">
-
-<script src="{{ url_for('static', filename='js/draw.js') }}"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+    <h1>Draw</h1>
+    <div style="display: flex;">
+        <div id="leftSidebar" class="leftSidebar">
+            <button id="loadImagesButton">Load Images</button>
+            <button id="prevImageButton">Previous</button>
+            <button id="nextImageButton">Next</button>
+            <button id="captureButton">Capture</button>
+            <button id="toggleDrawButton">Toggle Draw</button>
+            <input type="text" id="imageLabelInput" placeholder="Enter image label" style="margin-top: 10px;">
+            <button id="saveBoundingBoxButton">Save Bounding Box</button>
+        </div>
+    </div>
+    <div id="sidebar" style="position: fixed; right: 0; top: 0; width: 200px; height: 100%; overflow-y: auto; background-color: #f0f0f0; border-left: 1px solid #ccc;">
+        <h3>Image List</h3>
+        <div id="imageList"></div>
+    </div>
+    <div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/draw.js') }}"></script>
+</body>
+</html>

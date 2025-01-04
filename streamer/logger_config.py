@@ -9,3 +9,7 @@ def setup_logging():
             logging.FileHandler('streamer_debug.log')
         ]
     )
+    logger = logging.getLogger(__name__)
+    return logger
+
+logger = setup_logging()

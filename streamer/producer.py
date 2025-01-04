@@ -1,5 +1,5 @@
 import cv2
-import logging
+from logger import logger
 
 def YieldFrames(camera):
     while camera.running:

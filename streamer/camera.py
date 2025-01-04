@@ -1,10 +1,9 @@
 # Import the needed libraries
 import time
-from threading import Thread, Lock, current_thread
+from threading import Thread, Lock
 from utils import cleanup
 import cv2
-import logging
-logger = logging.getLogger(__name__)
+from logger import logger
 
 
 

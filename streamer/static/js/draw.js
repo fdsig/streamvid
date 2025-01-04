@@ -96,6 +96,8 @@ document.getElementById('loadImagesButton').addEventListener('click', function()
                 const imgElement = document.createElement('img');
                 imgElement.src = 'data:image/jpeg;base64,' + image;
                 imgElement.style.width = '100%';
+                imgElement.style.height = 'auto'; // Maintain aspect ratio
+                imgElement.style.objectFit = 'contain'; // Ensure the image fits within the container
                 imgElement.style.cursor = 'pointer';
                 imgElement.addEventListener('click', function() {
                     currentIndex = index;
