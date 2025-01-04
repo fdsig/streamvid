@@ -19,13 +19,13 @@
             <input type="text" id="imageLabelInput" placeholder="Enter image label" style="margin-top: 10px;">
             <button id="saveBoundingBoxButton">Save Bounding Box</button>
         </div>
-    </div>
-    <div id="sidebar" style="position: fixed; right: 0; top: 0; width: 200px; height: 100%; overflow-y: auto; background-color: #f0f0f0; border-left: 1px solid #ccc;">
-        <h3>Image List</h3>
+        <div>
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="sidebar" style="position: fixed; right: 0; top: 0; width: 200px; height: 100%; overflow-y: auto; background-color: #f0f0f0; border-left: 1px solid #ccc;">
+            <h3>Image List</h3>
         <div id="imageList"></div>
     </div>
-    <div>
-        <canvas id="canvas"></canvas>
     </div>
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/draw.js') }}"></script>
