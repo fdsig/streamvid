@@ -9,11 +9,23 @@ from logger import logger
 
 ''' credit to 
 https://github.com/thehapyone/NanoCamera/blob/master/nanocamera/NanoCam.py
-from where this code was adapted
-this solves the threading issue with the camera with one thread = one class instance
+which informed the approach to the camera capture.
+This solves the threading issue with the camera with one thread = one class instance
 '''
 
 class VideoCaptureCM:
+    '''
+    This class is a wrapper around the cv2.VideoCapture class.
+    It is used to capture frames from the camera.
+    Designed to be used with context manager.
+    example:
+    with VideoCaptureCM(pipeline, backend) as cap:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            # process the frame
+    '''
     def __init__(self, pipeline, backend):
         self.cap = cv2.VideoCapture(pipeline, backend)
 
@@ -48,6 +60,21 @@ class VideoCaptureCM:
 
 
 class JetsonCSI:
+    '''
+    This class a python camera capture class that uses the Jetson CSI camera.
+    It useses a threadsafe approach to capture frames from the camera.
+
+    example:
+    camera = JetsonCSI(flip=0, width=640, height=480, fps=30, camera_id=0)
+    while camera.running:
+        frame = camera.read()
+        # process the frame
+    camera.stop()
+    -- or --
+    frame_gen = YieldFrames(camera)
+    for frame in frame_gen:
+        # process the frame
+    '''
     def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0,
                  capture_handler=VideoCaptureCM):
         # Initialize camera parameters
@@ -56,14 +83,21 @@ class JetsonCSI:
         self.height = height
         self.fps = fps
         self.camera_id = camera_id
+        # set the backend to gstreamer -- this might change as camera driver changes
         self.backend = cv2.CAP_GSTREAMER
+        # set the capture handler to the VideoCaptureCM class   
         self.capture_handler = capture_handler
+        # set the lock to a lock object
         self.lock = Lock()
+        # set the running flag to True
         self.running = True
         # Start the camera thread
         self.start()
 
-    def __pipeline__(self):
+    def __pipeline(self):
+        '''
+        This function returns the gstreamer pipeline string for the camera.
+        '''
         return (f'nvarguscamerasrc sensor-id={self.camera_id} ! '
                 'video/x-raw(memory:NVMM), '
                 f'width=(int){self.width}, height=(int){self.height}, '
@@ -74,14 +108,20 @@ class JetsonCSI:
                 'video/x-raw, format=(string)BGR ! appsink')
     
     def start(self):
+        '''
+        This function starts the camera thread.
+        '''
         self.cam_thread = Thread(target=self.__read)
         self.cam_thread.daemon = True
         self.cam_thread.start()
         print(f"Camera thread ID: {self.cam_thread.ident}")
     
     def __read(self):
+        '''
+        This function reads a frame from the camera.
+        '''
         # Read a frame from the camera
-        with self.capture_handler(self.__pipeline__(), self.backend) as cap:
+        with self.capture_handler(self.__pipeline(), self.backend) as cap:
             while self.running:
                 if not cap.isOpened():
                     logger.error("Camera is not opened successfully")
@@ -93,12 +133,15 @@ class JetsonCSI:
                         self.video_frame = image
                 else:
                     logger.error("Error: Could not read image from camera")
-                    return None
+                    self.video_frame = None
         
-    def read(self):
+    def read(self) -> np.ndarray:
+        '''
+        This function reads a frame from the camera.
+        '''
         #read the camera stream
         with self.lock:
-            if self.video_frame is not None:
+            if self.video_frame:
                 return self.video_frame
             else:
                 return None
@@ -106,28 +149,3 @@ class JetsonCSI:
     def stop(self):
         self.running = False
         self.cam_thread.join()
-    
-    def queueFrames(self):
-        while self.running:
-            try:
-                self.video_frame = self.__read()
-                if self.video_frame is None:
-                    logger.error("No frame captured")
-                    continue
-                return_key, encoded_image = cv2.imencode(".jpg", self.video_frame)
-                if not return_key:
-                    logger.error("Failed to encode image")
-                    continue
-                if encoded_image is None:
-                    logger.error("Encoded image is None")
-                    continue
-                encoded_image = bytearray(encoded_image)
-                if not self.frame_queue.full():
-                    self.frame_queue.put(encoded_image)
-                else:
-                    logger.warning("Frame queue is full, skipping frame")
-            except Exception as e:
-                logger.error(f"Exception in queueFrames: {e}")
-
-
-
