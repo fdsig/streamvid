@@ -43,10 +43,10 @@ def draw():
     try:
         session_id = request.cookies.get('session_id')
     except TypeError:
-        logging.error(f"session_id not found in cookies")
+        logger.error(f"session_id not found in cookies")
         session_id = str(uuid4())
     except Exception as e:
-        logging.error(f"Error getting session_id: {e}")
+        logger.error(f"Error getting session_id: {e}")
         session_id = str(uuid4())
 
     print('draw session_id from draw', session_id)
