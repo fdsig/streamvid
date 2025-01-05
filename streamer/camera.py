@@ -147,5 +147,8 @@ class JetsonCSI:
                 return None
     
     def stop(self):
+        '''
+        This function stops the camera thread.
+        '''
         self.running = False
         self.cam_thread.join()
