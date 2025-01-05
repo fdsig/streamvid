@@ -4,12 +4,20 @@ let currentIndex = 0; // Declare currentIndex at the top level
 
 function resizeCanvas() {
     const canvas = document.getElementById('canvas');
-    canvas.width = window.innerWidth * 0.9;
-    canvas.height = window.innerHeight * 0.9;
+    const leftSidebarWidth = document.getElementById('leftSidebar').offsetWidth;
+    const rightSidebarWidth = document.getElementById('sidebar').offsetWidth;
+    const availableWidth = window.innerWidth - leftSidebarWidth - rightSidebarWidth;
+
+    // Set the canvas width to the available width
+    canvas.width = availableWidth;
+
+    // Maintain aspect ratio (e.g., 16:9)
+    const aspectRatio = 16 / 9;
+    canvas.height = availableWidth / aspectRatio;
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // Initial resize
+window.addEventListener('load', resizeCanvas);
 
 let drawMode = false;
 let rect = {};
