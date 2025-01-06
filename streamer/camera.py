@@ -1,6 +1,8 @@
 # Import the needed libraries
 import time
 from threading import Thread, Lock
+from typing import Any
+import numpy as np
 from utils import cleanup
 import cv2
 from logger import logger
@@ -75,9 +77,11 @@ class JetsonCSI:
     for frame in frame_gen:
         # process the frame
     '''
-    def __init__(self, flip=0, width=640, height=480, fps=30, camera_id=0,
-                 capture_handler=VideoCaptureCM):
+    def __init__(self, flip:int = 0, width:int = 640, height:int = 480, fps:int = 30, camera_id:int = 0,
+                 capture_handler:VideoCaptureCM = VideoCaptureCM):
         # Initialize camera parameters
+
+
         self.flip = flip
         self.width = width
         self.height = height
@@ -141,7 +145,7 @@ class JetsonCSI:
         '''
         #read the camera stream
         with self.lock:
-            if self.video_frame:
+            if isinstance(self.video_frame, np.ndarray):
                 return self.video_frame
             else:
                 return None
