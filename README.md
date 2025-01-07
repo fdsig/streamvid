@@ -13,8 +13,6 @@ Using No-IP's DDNS service (or any other similar service) is a great way to expo
 
 ### data labelling
 
-data is labelled using a modified version of  [VIA](https://www.robots.ox.ac.uk/~vgg/software/via/) which is integrated into this project and can take camera stills that are captured on edge device and served from the same edge device and label these either for semantic segmentation or bounding box task.
-
 this flask app has a backend that will run on device to caputure image from a picamera and serve it to the frontend.
 
 fronend labeling is then saved straing to device.
