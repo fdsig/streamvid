@@ -40,7 +40,9 @@ to do:
 - [ ] set up tracking
 - [ ] visualize inference live in video stream
 - [ ] inferenct tab for app
-- [ ] 
+- [ ] llm check of inference
+- [ ] test vanialla model on device
+
 
 
 
