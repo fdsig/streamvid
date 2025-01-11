@@ -13,9 +13,9 @@ Using No-IP's DDNS service (or any other similar service) is a great way to expo
 
 ### data labelling
 
-This id done on device -- by running streamer.py which used flask middle ware -- images are saved back on device.
-This flask app has a backend that will run on device to caputure image from a pi-camera and serve it to the frontend.
-fronend labeling is then saved straing to device.
+This is done on the device -- by running streamer.py which uses Flask middleware -- images are saved back on the device.
+This flask app has a backend that will run on a device to capture ian mage from a pi-camera and serve it to the frontend.
+frontend labelling is then saved streaming to the device.
 
 to run this simply pip install 
 
@@ -27,21 +27,36 @@ python streamer/stream.py
 
 ## Model training
 
-Take labelled images and then fine tune for smaller number of specific categories -- i.e. from object detection genereic multiple classes to cat [a,b,c] 
+Take labelled images and then fine-tune for a smaller number of specific categories -- i.e. from object detection generic multiple classes to cat [a,b,c] 
 
-Deplyment/ logic
+Deployment/ logic
 
-measure proximit between both bounding boxes of feeder and cats
+measure the proximity between both bounding boxes of feeder and cats
+
+
+## LLM 
+
+LLM call application that describes based on classified data as a second check 
+
+## LLM Call QA
+
+example questions might include
+
+how was my cat today  
+how often did my cat move today
+has my cat eaten today
+
 
 
 to do:
 
 - [ ] source train object detection model
 - [ ] set up tracking
-- [ ] visualize inference live in video stream
-- [ ] inferenct tab for app
-- [ ] llm check of inference
-- [ ] test vanialla model on device
+- [ ] visualize inference live in the video stream
+- [ ] inference tab for app
+- [ ] LLM check of inference
+- [ ] LLM rag approach 
+- [ ] test the Vanialla model on the device
 
 
 
